@@ -122,12 +122,12 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               label="Digital Products"
               onClick={onClose}
             />
-            <SidebarLink
+            {/* <SidebarLink
               href="/admin/dashboard/homepage-management"
               icon={LayoutDashboard}
               label="Homepage"
               onClick={onClose}
-            />
+            /> */}
             <SidebarLink
               href="/admin/dashboard/orders"
               icon={ShoppingCart}

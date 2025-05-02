@@ -1,13 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
+import * as products from "@/services/productService";
+import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
-import { useEffect, useState } from "react";
-import {
-  getDigitalProducts,
-  createDigitalProduct,
-  updateDigitalProduct,
-  deleteDigitalProduct,
-  Product,
-  DigitalProduct,
-} from "@/services/digitalProductsService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Edit, Trash2, Upload, FileText } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  Upload,
+  FileText,
+  Home,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +43,67 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+export interface Product {
+  id: string;
+  category: string;
+  platform_name: string;
+  description: string;
+  price: string;
+  stock_quantity: number;
+  imageUrl?: string;
+  important_notice: string;
+  data_format: string; // 👈 Required here
+  on_homepage?: string;
+  date_created?: string;
+  homepage_position?: string;
+}
+
+export interface DigitalProduct {
+  id: string;
+  platform_name: string;
+  category: string;
+  price: string;
+  description: string;
+  data_format: string;
+  important_notice: string;
+  stock_quantity: number;
+  on_homepage?: string;
+  date_created?: string; // ✅ use this field for filtering
+  homepage_position?: string; // ✅ use this field for filtering
+}
+
+// Internal API functions
+const createDigitalProduct = async (formData: FormData) => {
+  const response = await axios.post(
+    `${API_BASE_URL}/create-digital-products`,
+    formData
+  );
+  return response.data;
+};
+
+const updateDigitalProduct = async (id: string, product: Product) => {
+  const response = await axios.put(
+    `${API_BASE_URL}/digital-products/${id}`,
+    product
+  );
+  return response.data;
+};
+
+const deleteDigitalProduct = async (id: string) => {
+  const response = await axios.delete(`${API_BASE_URL}/digital-products/${id}`);
+  return response.data;
+};
+
 const categoryOptions = [
+  "Aged Accounts",
+  "New Accounts",
+  "Verified Accounts",
+  "Unverified Accounts",
+  "High Activity Accounts",
+  "Low Activity Accounts",
+];
+
+const platformNameOptions = [
   "Facebook",
   "Instagram",
   "Twitter",
@@ -74,27 +137,66 @@ const dataFormatOptions = [
   "PNG",
 ];
 
+import PlatformFilter from "@/components/PlatformFilter";
+import { HomepageToggleDialog } from "./HomepageToggleDialog";
+import {
+  postProductToHomepage,
+  removeProductFromHomepage,
+} from "@/services/homepageService";
+
 const DigitalProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<DigitalProduct>({
-    platform_name: "",
+  const [filters, setFilters] = useState({
+    platform: "",
     category: "",
-    price: 0,
+    stock: "",
+    priceMin: "",
+    priceMax: "",
+    sortByDate: "newest", // ✅ default is 'newest'
+  });
+
+  const [currentProduct, setCurrentProduct] = useState<Product>({
+    id: "",
+    category: "",
+    platform_name: "",
     description: "",
-    data_format: "",
-    important_notice: "",
+    price: "",
     stock_quantity: 0,
+    imageUrl: "",
+    important_notice: "",
+    data_format: "",
   });
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery<Product[]>({
-    queryKey: ["digitalProducts"],
-    queryFn: getDigitalProducts,
-  });
+  const [data, setData] = useState<Product[]>();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedPlatform, setSelectedPlatform] = useState("");
+
+  // Get all unique platforms from data
+  const platforms = useMemo(() => {
+    const platformSet = new Set(data?.map((p) => p.platform_name));
+    return Array.from(platformSet);
+  }, [data]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const fetchedProducts = await products.fetchAllProducts();
+        console.log(fetchedProducts);
+        setData(fetchedProducts);
+      } catch (error) {
+        toast.error("Failed to fetch products");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const createProductMutation = useMutation({
     mutationFn: async (formData: FormData) => createDigitalProduct(formData),
@@ -108,16 +210,59 @@ const DigitalProductsPage = () => {
     },
   });
 
+  const handleHomepageChange = async (
+    productId: string,
+    checked: boolean,
+    position: number
+  ) => {
+    if (checked) {
+      // If the product should be added to the homepage
+      try {
+        const response = await axios.post(
+          "https://aitool.asoroautomotive.com/api/post-product-to-homepage",
+          {
+            product_id: productId,
+            position: position,
+          }
+        );
+
+        if (response.status === 201) {
+          // Successfully added to homepage
+          alert("Product added to the homepage successfully");
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error("Error adding product to homepage", error);
+      }
+    } else {
+      // If the product should be removed from the homepage
+      try {
+        const response = await axios.put(
+          `https://aitool.asoroautomotive.com/api/remove-product-from-homepage/${productId}`
+        );
+
+        if (response.status === 200) {
+          // Successfully removed from homepage
+          alert("Product removed from homepage successfully");
+          window.location.reload(); // Reload the page to reflect changes
+        }
+      } catch (error) {
+        console.error("Error removing product from homepage", error);
+      }
+    }
+  };
+
   const updateProductMutation = useMutation({
-    mutationFn: (productData: DigitalProduct) =>
-      updateDigitalProduct(productData.id!, productData),
+    mutationFn: (productData: Product) =>
+      updateDigitalProduct(productData.id, productData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
       toast.success("Digital product updated successfully");
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update product");
+      toast.error("Failed to update product. Ensure to reselect files.");
+      // toast.error(error.message || "Failed to update product");
     },
   });
 
@@ -133,10 +278,8 @@ const DigitalProductsPage = () => {
   });
 
   const uploadFilesMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      return await createDigitalProduct(formData);
-    },
-    onSuccess: (data: any) => {
+    mutationFn: async (formData: FormData) => createDigitalProduct(formData),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
       toast.success("Files uploaded successfully");
       setIsDialogOpen(false);
@@ -147,41 +290,49 @@ const DigitalProductsPage = () => {
   });
 
   // Convert Product[] to DigitalProduct[] for type compatibility
-  const filteredProducts = data 
-    ? data
-        .filter(
-          (product) =>
-            product.platform_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            product.description.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .map((product): DigitalProduct => ({
-          id: product.id,
-          platform_name: product.platform_name,
-          category: product.category,
-          price: product.price,
-          description: product.description,
-          data_format: product.data_format || "",
-          important_notice: product.important_notice || "",
-          stock_quantity: product.stock_quantity,
-          on_homepage: product.on_homepage,
-          created_at: product.created_at,
-        }))
-    : [];
+  const filteredProducts =
+    data
+      ?.filter((product) => {
+        // ...existing filtering logic
+        return (
+          product.platform_name
+            .toLowerCase()
+            .includes(filters.platform.toLowerCase()) &&
+          product.category
+            .toLowerCase()
+            .includes(filters.category.toLowerCase()) &&
+          (filters.stock
+            ? product.stock_quantity >= parseInt(filters.stock)
+            : true) &&
+          (filters.priceMin
+            ? parseFloat(product.price) >= parseFloat(filters.priceMin)
+            : true) &&
+          (filters.priceMax
+            ? parseFloat(product.price) <= parseFloat(filters.priceMax)
+            : true)
+        );
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.date_created || "").getTime();
+        const dateB = new Date(b.date_created || "").getTime();
 
-  const handleOpenDialog = (product?: DigitalProduct) => {
+        return filters.sortByDate === "newest" ? dateB - dateA : dateA - dateB;
+      }) || [];
+
+  const handleOpenDialog = (product?: Product) => {
     if (product) {
       setCurrentProduct(product);
       setIsEditing(true);
     } else {
       setCurrentProduct({
-        platform_name: "",
+        id: "",
         category: "",
-        price: 0,
+        platform_name: "",
         description: "",
-        data_format: "",
-        important_notice: "",
+        price: "",
         stock_quantity: 0,
+        important_notice: "",
+        data_format: "",
       });
       setIsEditing(false);
     }
@@ -292,6 +443,91 @@ const DigitalProductsPage = () => {
           Add Digital Product
         </Button>
       </div>
+      <PlatformFilter
+        platforms={platforms}
+        selectedPlatform={selectedPlatform}
+        onChange={(value) => setSelectedPlatform(value)}
+      />
+      <div className="flex flex-wrap gap-4 mb-4">
+        {/* Platform */}
+        <select
+          value={filters.platform}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, platform: e.target.value }))
+          }
+        >
+          <option value="">All Platforms</option>
+          {platforms.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+
+        {/* Category */}
+        <select
+          value={filters.category}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, category: e.target.value }))
+          }
+        >
+          <option value="">All Categories</option>
+          {Array.from(new Set(data?.map((p) => p.category))).map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+
+        {/* Price Range */}
+        <input
+          type="number"
+          placeholder="Min Price"
+          value={filters.priceMin}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, priceMin: e.target.value }))
+          }
+        />
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={filters.priceMax}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, priceMax: e.target.value }))
+          }
+        />
+
+        {/* Stock */}
+        <input
+          type="number"
+          placeholder="Min Stock"
+          value={filters.stock}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, stockMin: e.target.value }))
+          }
+        />
+        <div className="space-y-2">
+          <Label htmlFor="sortByDate">Sort by Date</Label>
+          <Select
+            value={filters.sortByDate}
+            onValueChange={(value) =>
+              setFilters({ ...filters, sortByDate: value })
+            }
+          >
+            <SelectTrigger id="sortByDate">
+              <SelectValue placeholder="Sort by date" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground mb-2">
+        Showing <strong>{filteredProducts.length}</strong> of{" "}
+        {data?.length ?? 0} product{(data?.length ?? 0) !== 1 ? "s" : ""}
+      </p>
 
       <Card className="glass-card">
         <CardHeader className="pb-3">
@@ -335,7 +571,7 @@ const DigitalProductsPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredProducts.map((product: DigitalProduct) => (
+                  filteredProducts.map((product: Product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">
                         {product.platform_name}
@@ -358,14 +594,14 @@ const DigitalProductsPage = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(product)}
                         >
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
-                        </Button>
+                        </Button> */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -374,6 +610,19 @@ const DigitalProductsPage = () => {
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
                         </Button>
+                        <HomepageToggleDialog
+                          productName={product.platform_name}
+                          isOnHomepage={product.on_homepage === "true"}
+                          position={parseInt(product.homepage_position)} // Ensure position is passed as a number
+                          onSubmit={(checked, position) =>
+                            handleHomepageChange(product.id!, checked, position)
+                          }
+                          triggerElement={
+                            <Button variant="ghost" size="icon">
+                              <Home className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   ))
@@ -398,7 +647,7 @@ const DigitalProductsPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-              <div className="space-y-2 md:col-span-2">
+              {/* <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="platform_name">Product Name</Label>
                 <Input
                   id="platform_name"
@@ -408,6 +657,26 @@ const DigitalProductsPage = () => {
                   placeholder="Enter product name"
                   required
                 />
+              </div> */}
+              <div className="space-y-2">
+                <Label htmlFor="platform_name">Platform Name</Label>
+                <Select
+                  value={currentProduct.platform_name}
+                  onValueChange={(value) =>
+                    handleSelectChange("platform_name", value)
+                  }
+                >
+                  <SelectTrigger id="platformName">
+                    <SelectValue placeholder="Select platform name" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {platformNameOptions.map((platformName) => (
+                      <SelectItem key={platformName} value={platformName}>
+                        {platformName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>

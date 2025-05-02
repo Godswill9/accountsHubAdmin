@@ -17,6 +17,6 @@ export const updateProductOnHomepage = async (id: string, productData: any) => {
 };
 
 export const removeProductFromHomepage = async (id: string) => {
-  const response = await apiClient.delete(`/api/remove-product-from-homepage/${id}`);
+  const response = await apiClient.put(`/api/remove-product-from-homepage/${id}`);
   return response.data;
 };

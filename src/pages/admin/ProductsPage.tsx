@@ -1,25 +1,21 @@
-
 import { useEffect, useState } from "react";
-import { getAllProducts, postProductToHomepage, updateProductOnHomepage, removeProductFromHomepage } from "@/services/productService";
+import {
+  fetchAllProducts,
+  fetchFeaturedProducts,
+  fetchProductDetails,
+} from "@/services/productService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Star,
-  StarOff
-} from "lucide-react";
+import { Search, Plus, Edit, Trash2, Star, StarOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -58,8 +54,8 @@ const ProductsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await getAllProducts();
-        setProducts(response.products);
+        const response = await fetchAllProducts();
+        // setProducts(response.products);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -92,7 +88,9 @@ const ProductsPage = () => {
     setIsDialogOpen(true);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setCurrentProduct({
       ...currentProduct,
@@ -107,66 +105,75 @@ const ProductsPage = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
 
-    try {
-      if (isEditing) {
-        const response = await updateProductOnHomepage(currentProduct.id!, currentProduct);
-        
-        setProducts(products.map(product => 
-          product.id === currentProduct.id ? response.product : product
-        ));
-        
-        toast.success("Product updated successfully");
-      } else {
-        const response = await postProductToHomepage(currentProduct);
-        
-        setProducts([...products, response.product]);
-        
-        toast.success("Product added successfully");
-      }
-      
-      setIsDialogOpen(false);
-    } catch (error) {
-      toast.error("Error saving product");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //   try {
+  //     if (isEditing) {
+  //       const response = await updateProductOnHomepage(
+  //         currentProduct.id!,
+  //         currentProduct
+  //       );
 
-  const handleToggleFeatured = async (id: string, featured: boolean) => {
-    try {
-      const product = products.find(p => p.id === id);
-      
-      if (!product) return;
-      
-      const updated = { ...product, featured: !featured };
-      
-      await updateProductOnHomepage(id, updated);
-      
-      setProducts(products.map(product => 
-        product.id === id ? { ...product, featured: !featured } : product
-      ));
-      
-      toast.success(`Product ${!featured ? "added to" : "removed from"} homepage`);
-    } catch (error) {
-      toast.error("Error updating product");
-    }
-  };
+  //       setProducts(
+  //         products.map((product) =>
+  //           product.id === currentProduct.id ? response.product : product
+  //         )
+  //       );
 
-  const handleDelete = async (id: string) => {
-    try {
-      await removeProductFromHomepage(id);
-      
-      setProducts(products.filter(product => product.id !== id));
-      
-      toast.success("Product removed successfully");
-    } catch (error) {
-      toast.error("Error removing product");
-    }
-  };
+  //       toast.success("Product updated successfully");
+  //     } else {
+  //       const response = await postProductToHomepage(currentProduct);
+
+  //       setProducts([...products, response.product]);
+
+  //       toast.success("Product added successfully");
+  //     }
+
+  //     setIsDialogOpen(false);
+  //   } catch (error) {
+  //     toast.error("Error saving product");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // const handleToggleFeatured = async (id: string, featured: boolean) => {
+  //   try {
+  //     const product = products.find((p) => p.id === id);
+
+  //     if (!product) return;
+
+  //     const updated = { ...product, featured: !featured };
+
+  //     await updateProductOnHomepage(id, updated);
+
+  //     setProducts(
+  //       products.map((product) =>
+  //         product.id === id ? { ...product, featured: !featured } : product
+  //       )
+  //     );
+
+  //     toast.success(
+  //       `Product ${!featured ? "added to" : "removed from"} homepage`
+  //     );
+  //   } catch (error) {
+  //     toast.error("Error updating product");
+  //   }
+  // };
+
+  // const handleDelete = async (id: string) => {
+  //   try {
+  //     await removeProductFromHomepage(id);
+
+  //     setProducts(products.filter((product) => product.id !== id));
+
+  //     toast.success("Product removed successfully");
+  //   } catch (error) {
+  //     toast.error("Error removing product");
+  //   }
+  // };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -224,7 +231,9 @@ const ProductsPage = () => {
                 ) : (
                   filteredProducts.map((product) => (
                     <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {product.name}
+                      </TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
                       <TableCell>
                         {product.featured ? (
@@ -238,10 +247,15 @@ const ProductsPage = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="ghost" 
+                        {/* <Button
+                          variant="ghost"
                           size="icon"
-                          onClick={() => handleToggleFeatured(product.id!, !!product.featured)}
+                          onClick={() =>
+                            handleToggleFeatured(
+                              product.id!,
+                              !!product.featured
+                            )
+                          }
                         >
                           {product.featured ? (
                             <StarOff className="h-4 w-4" />
@@ -249,25 +263,27 @@ const ProductsPage = () => {
                             <Star className="h-4 w-4" />
                           )}
                           <span className="sr-only">
-                            {product.featured ? "Remove from featured" : "Add to featured"}
+                            {product.featured
+                              ? "Remove from featured"
+                              : "Add to featured"}
                           </span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
+                        </Button> */}
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(product)}
                         >
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        {/* <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(product.id!)}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
-                        </Button>
+                        </Button> */}
                       </TableCell>
                     </TableRow>
                   ))
@@ -281,14 +297,16 @@ const ProductsPage = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Product" : "Add New Product"}</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit Product" : "Add New Product"}
+            </DialogTitle>
             <DialogDescription>
-              {isEditing 
-                ? "Make changes to the product details below." 
+              {isEditing
+                ? "Make changes to the product details below."
                 : "Fill in the details for the new product."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
+          {/* <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Product Name</Label>
@@ -337,10 +355,14 @@ const ProductsPage = () => {
             </div>
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : isEditing ? "Save Changes" : "Add Product"}
+                {isLoading
+                  ? "Saving..."
+                  : isEditing
+                  ? "Save Changes"
+                  : "Add Product"}
               </Button>
             </DialogFooter>
-          </form>
+          </form> */}
         </DialogContent>
       </Dialog>
     </div>

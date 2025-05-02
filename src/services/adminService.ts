@@ -25,12 +25,9 @@ export { getAllUsers } from './userService';
 export { getMetrics, getOrders } from './analyticsService';
 
 // Export product service functions with explicit naming to avoid conflicts
-export { 
-  getAllProducts, 
-  // Rename conflicting functions for clarity
-  getFeaturedProducts as getProductServiceFeaturedProducts,
-  postProductToHomepage as productServicePostToHomepage,
-  updateProductOnHomepage as productServiceUpdateOnHomepage,
-  removeProductFromHomepage as productServiceRemoveFromHomepage,
-  ProductService 
-} from './productService';
+export {
+  fetchAllProducts,
+  fetchFeaturedProducts as getProductServiceFeaturedProducts,
+  fetchProductDetails,
+}
+from './productService';
