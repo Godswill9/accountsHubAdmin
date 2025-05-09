@@ -28,6 +28,8 @@ import WalletPage from "./pages/admin/WalletPage";
 import ProfilePage from "./pages/admin/ProfilePage";
 import DigitalProductsPage from "./pages/admin/DigitalProductsPage";
 import HomepageManagementPage from "./pages/admin/HomepageManagementPage";
+import Sellers from "./pages/admin/Sellers";
+import PendingDigitalProduct from "./pages/admin/pendingDigitalProducts";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,10 +71,15 @@ const App = () => (
             <Route path="/admin/dashboard/*" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="sellers" element={<Sellers />} />
               {/* <Route path="products" element={<ProductsPage />} /> */}
               <Route
                 path="digital-products"
                 element={<DigitalProductsPage />}
+              />
+              <Route
+                path="pending-digital-products"
+                element={<PendingDigitalProduct />}
               />
               <Route
                 path="homepage-management"

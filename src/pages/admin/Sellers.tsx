@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllUsers } from "@/services/userService";
+import { getAllSellers } from "@/services/sellersServices.ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,68 +12,71 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search, Plus, Edit, Trash2 } from "lucide-react";
-
-interface User {
-  id: string;
-  username: string;
+interface Seller {
+  seller_id: string;
   email: string;
-  created_at: string;
   fullName: string;
-  verified: string;
+  avatar?: string;
+  created_at: Date;
+  country?: string;
+  phoneNumber?: string;
+  preferred_currency?: string;
+  verification_status?: string;
+  preferred_language?: string;
   acc_status: string;
   wallet_balance: Number;
 }
 
-const UsersPage = () => {
-  const [users, setUsers] = useState<User[]>([]);
+const Sellers = () => {
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchsellers = async () => {
       try {
-        const response = await getAllUsers();
+        const response = await getAllSellers();
         console.log(response);
-        setUsers(response);
+        setSellers(response);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching sellers:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchsellers();
   }, []);
-  console.log(users);
-  const filteredUsers = users.filter((user) =>
-    // user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  console.log(sellers);
+  const filteredsellers = sellers.filter((seller) =>
+    // seller.sellername.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    seller.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Sellers</h1>
           <p className="text-muted-foreground">
-            Manage and view all registered users
+            Manage and view all registered sellers
           </p>
         </div>
         {/* <Button className="md:w-auto">
           <Plus className="mr-2 h-4 w-4" />
-          Add User
+          Add seller
         </Button> */}
       </div>
 
       <Card className="glass-card">
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>All Users</CardTitle>
+            <CardTitle>All sellers</CardTitle>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search users..."
+                placeholder="Search sellers..."
                 className="pl-8 md:w-[240px] lg:w-[320px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -91,35 +94,35 @@ const UsersPage = () => {
               <TableHeader>
                 <TableRow>
                   {/* <TableHead>Name</TableHead> */}
-                  <TableHead>Name</TableHead>
+                  <TableHead>Full Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Verification status</TableHead>
                   <TableHead>Wallet balance</TableHead>
-                  <TableHead>verification status</TableHead>
+                  <TableHead>Account status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length === 0 ? (
+                {filteredsellers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-10">
-                      No users found
+                      No sellers found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
+                  filteredsellers.map((seller) => (
+                    <TableRow key={seller.seller_id}>
                       {/* <TableCell className="font-medium">
-                        {user.username}
+                        {seller.sellername}
                       </TableCell> */}
-                      <TableCell>{user.fullName}</TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{seller.fullName}</TableCell>
+                      <TableCell>{seller.email}</TableCell>
                       <TableCell>
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {new Date(seller.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>${Number(user.wallet_balance)}</TableCell>
                       <TableCell>
-                        {user.verified === "true" ? (
+                        {seller.verification_status === "true" ? (
                           <span className="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
                             Verified
                           </span>
@@ -130,6 +133,8 @@ const UsersPage = () => {
                         )}
                       </TableCell>
 
+                      <TableCell>${Number(seller.wallet_balance)}</TableCell>
+                      <TableCell>{seller.acc_status}</TableCell>
                       <TableCell className="text-right space-x-2">
                         {/* <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4" />
@@ -152,4 +157,4 @@ const UsersPage = () => {
   );
 };
 
-export default UsersPage;
+export default Sellers;

@@ -117,9 +117,21 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               onClick={onClose}
             />
             <SidebarLink
+              href="/admin/dashboard/sellers"
+              icon={Users}
+              label="Sellers Management"
+              onClick={onClose}
+            />
+            <SidebarLink
               href="/admin/dashboard/digital-products"
               icon={FileText}
               label="Digital Products"
+              onClick={onClose}
+            />
+            <SidebarLink
+              href="/admin/dashboard/pending-digital-products"
+              icon={FileText}
+              label="Pending digital products"
               onClick={onClose}
             />
             {/* <SidebarLink

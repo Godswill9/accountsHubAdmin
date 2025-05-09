@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as products from "@/services/productService";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProductDetailsDialog from "@/components/ProductDialogTabs"; // Adjust path as needed
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -56,8 +58,8 @@ export interface Product {
   data_format: string; // 👈 Required here
   on_homepage?: string;
   date_created?: string;
-  seller_id?: string;
   homepage_position?: string;
+  status: string;
 }
 
 export interface DigitalProduct {
@@ -68,20 +70,12 @@ export interface DigitalProduct {
   description: string;
   data_format: string;
   important_notice: string;
+  status: string;
   stock_quantity: number;
   on_homepage?: string;
   date_created?: string; // ✅ use this field for filtering
   homepage_position?: string; // ✅ use this field for filtering
 }
-
-// Internal API functions
-const createDigitalProduct = async (formData: FormData) => {
-  const response = await axios.post(
-    `${API_BASE_URL}/create-digital-products`,
-    formData
-  );
-  return response.data;
-};
 
 const updateDigitalProduct = async (id: string, product: Product) => {
   const response = await axios.put(
@@ -145,16 +139,15 @@ import {
   postProductToHomepage,
   removeProductFromHomepage,
 } from "@/services/homepageService";
+import { DialogClose } from "@radix-ui/react-dialog";
 
-const DigitalProductsPage = () => {
+const PendingDigitalProduct = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedTextFiles, setSelectedTextFiles] = useState<File[]>([]);
-  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
   const [files, setFiles] = useState<any[]>([]);
   const [images, setImages] = useState<any[]>([]);
+
   const [filters, setFilters] = useState({
     platform: "",
     category: "",
@@ -163,19 +156,8 @@ const DigitalProductsPage = () => {
     priceMax: "",
     sortByDate: "newest", // ✅ default is 'newest'
   });
-
-  const [currentProduct, setCurrentProduct] = useState<Product>({
-    id: "",
-    category: "",
-    platform_name: "",
-    description: "",
-    price: "",
-    stock_quantity: 0,
-    imageUrl: "",
-    important_notice: "",
-    data_format: "",
-    seller_id: "",
-  });
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   const queryClient = useQueryClient();
@@ -191,29 +173,11 @@ const DigitalProductsPage = () => {
   }, [data]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fetchedProducts = await products.fetchAllProducts();
-        const validProducts = fetchedProducts.filter(
-          (product) => product.status === "approved"
-        );
-        setData(validProducts);
-      } catch (error) {
-        toast.error("Failed to fetch products");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (currentProduct?.id) {
-      fetchFiles(currentProduct.id);
-      fetchImages(currentProduct.id);
+    if (selectedProduct?.id) {
+      fetchFiles(selectedProduct.id);
+      fetchImages(selectedProduct.id);
     }
-  }, [currentProduct]);
+  }, [selectedProduct]);
 
   const fetchFiles = async (productId: string) => {
     // try {
@@ -235,63 +199,27 @@ const DigitalProductsPage = () => {
     // }
   };
 
-  const createProductMutation = useMutation({
-    mutationFn: async (formData: FormData) => createDigitalProduct(formData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
-      toast.success("Digital product created successfully");
-      setIsDialogOpen(false);
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create product");
-    },
-  });
-
-  const handleProductOpenDialogDetails = (product: any) => {
-    setCurrentProduct(product);
-    setIsProductDialogOpen(true);
-  };
-
-  const handleHomepageChange = async (
-    productId: string,
-    checked: boolean,
-    position: number
-  ) => {
-    if (checked) {
-      // If the product should be added to the homepage
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const response = await axios.post(
-          "https://aitool.asoroautomotive.com/api/post-product-to-homepage",
-          {
-            product_id: productId,
-            position: position,
-          }
+        const fetchedProducts = await products.fetchAllProducts();
+        const pendingProducts = fetchedProducts.filter(
+          (product) => product.status === "pending"
         );
-
-        if (response.status === 201) {
-          // Successfully added to homepage
-          alert("Product added to the homepage successfully");
-          window.location.reload();
-        }
+        setData(pendingProducts);
       } catch (error) {
-        console.error("Error adding product to homepage", error);
+        toast.error("Failed to fetch products");
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      // If the product should be removed from the homepage
-      try {
-        const response = await axios.put(
-          `https://aitool.asoroautomotive.com/api/remove-product-from-homepage/${productId}`
-        );
+    };
 
-        if (response.status === 200) {
-          // Successfully removed from homepage
-          alert("Product removed from homepage successfully");
-          window.location.reload(); // Reload the page to reflect changes
-        }
-      } catch (error) {
-        console.error("Error removing product from homepage", error);
-      }
-    }
+    fetchData();
+  }, []);
+
+  const handleOpenDialog = (product: any) => {
+    setSelectedProduct(product);
+    setIsDialogOpen(true);
   };
 
   const updateProductMutation = useMutation({
@@ -316,18 +244,6 @@ const DigitalProductsPage = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete product");
-    },
-  });
-
-  const uploadFilesMutation = useMutation({
-    mutationFn: async (formData: FormData) => createDigitalProduct(formData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
-      toast.success("Files uploaded successfully");
-      setIsDialogOpen(false);
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to upload files");
     },
   });
 
@@ -361,107 +277,6 @@ const DigitalProductsPage = () => {
         return filters.sortByDate === "newest" ? dateB - dateA : dateA - dateB;
       }) || [];
 
-  const handleOpenDialogDetails = (product?: Product) => {
-    if (product) {
-      setCurrentProduct(product);
-      setIsEditing(true);
-    } else {
-      setCurrentProduct({
-        id: "",
-        category: "",
-        platform_name: "",
-        description: "",
-        price: "",
-        stock_quantity: 0,
-        important_notice: "",
-        data_format: "",
-      });
-      setIsEditing(false);
-    }
-    setSelectedTextFiles(null);
-    setSelectedImageFiles(null);
-    setIsDialogOpen(true);
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setCurrentProduct({
-      ...currentProduct,
-      [name]: name === "price" ? parseFloat(value) : value,
-    });
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setCurrentProduct({
-      ...currentProduct,
-      [name]: value,
-    });
-  };
-
-  const handleTextFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-
-    if (files) {
-      const allowedTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "text/plain",
-      ];
-
-      const filteredFiles = Array.from(files).filter((file) =>
-        allowedTypes.includes(file.type)
-      );
-
-      if (filteredFiles.length === 0) {
-        toast.error("Only PDF, Word, or TXT files are allowed.");
-        setSelectedTextFiles(null);
-        return;
-      } else {
-        setSelectedTextFiles(Array.from(files));
-        setCurrentProduct((prev) => ({
-          ...prev,
-          stock_quantity: files.length,
-        })); // Update stock quantity based on number of files
-      }
-    }
-  };
-
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setSelectedImageFiles(Array.from(e.target.files));
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const formData = new FormData();
-
-    formData.append("platform_name", currentProduct.platform_name || "");
-    formData.append("category", currentProduct.category || "");
-    formData.append("price", currentProduct.price.toString() || "0");
-    formData.append("description", currentProduct.description || "");
-    formData.append("data_format", currentProduct.data_format || "");
-    formData.append("important_notice", currentProduct.important_notice || "");
-
-    if (selectedTextFiles.length > 0) {
-      for (let i = 0; i < selectedTextFiles.length; i++) {
-        formData.append("text_files", selectedTextFiles[i]);
-      }
-    }
-
-    if (selectedImageFiles.length > 0) {
-      for (let i = 0; i < selectedImageFiles.length; i++) {
-        formData.append("image_files", selectedImageFiles[i]);
-      }
-    }
-
-    createProductMutation.mutate(formData);
-  };
-
   const handleDeleteProduct = (id: string) => {
     if (
       window.confirm(
@@ -472,26 +287,19 @@ const DigitalProductsPage = () => {
     }
   };
 
-  const isMutating =
-    createProductMutation.isPending ||
-    updateProductMutation.isPending ||
-    uploadFilesMutation.isPending;
+  //   const isMutating =updateProductMutation.isPending
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Digital Products
+            Pending Digital Products
           </h1>
           <p className="text-muted-foreground">
-            Manage digital products and downloadable content
+            Manage pending digital products
           </p>
         </div>
-        <Button onClick={() => handleOpenDialogDetails()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Digital Product
-        </Button>
       </div>
       <PlatformFilter
         platforms={platforms}
@@ -604,6 +412,7 @@ const DigitalProductsPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Status</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Price</TableHead>
@@ -623,6 +432,18 @@ const DigitalProductsPage = () => {
                 ) : (
                   filteredProducts.map((product: Product) => (
                     <TableRow key={product.id}>
+                      <TableCell className="font-medium">
+                        {product.status === "pending" ? (
+                          <span className="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">
+                            Pending
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
+                            Approved
+                          </span>
+                        )}
+                      </TableCell>
+
                       <TableCell className="font-medium">
                         {product.platform_name}
                       </TableCell>
@@ -647,13 +468,12 @@ const DigitalProductsPage = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() =>
-                            handleProductOpenDialogDetails(product)
-                          }
+                          onClick={() => handleOpenDialog(product)}
                         >
                           <Eye className="h-4 w-4" />
                           <span className="sr-only">View</span>
                         </Button>
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -662,19 +482,6 @@ const DigitalProductsPage = () => {
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
                         </Button>
-                        <HomepageToggleDialog
-                          productName={product.platform_name}
-                          isOnHomepage={product.on_homepage === "true"}
-                          position={parseInt(product.homepage_position)} // Ensure position is passed as a number
-                          onSubmit={(checked, position) =>
-                            handleHomepageChange(product.id!, checked, position)
-                          }
-                          triggerElement={
-                            <Button variant="ghost" size="icon">
-                              <Home className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
                       </TableCell>
                     </TableRow>
                   ))
@@ -684,223 +491,7 @@ const DigitalProductsPage = () => {
           )}
         </CardContent>
       </Card>
-
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl w-full mx-auto overflow-y-auto max-h-[90vh] p-6">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "Edit Digital Product" : "Add New Digital Product"}
-            </DialogTitle>
-            <DialogDescription>
-              {isEditing
-                ? "Make changes to the digital product below"
-                : "Fill in the details for the new digital product"}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-              {/* <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="platform_name">Product Name</Label>
-                <Input
-                  id="platform_name"
-                  name="platform_name"
-                  value={currentProduct.platform_name}
-                  onChange={handleInputChange}
-                  placeholder="Enter product name"
-                  required
-                />
-              </div> */}
-              <div className="space-y-2">
-                <Label htmlFor="platform_name">Platform Name</Label>
-                <Select
-                  value={currentProduct.platform_name}
-                  onValueChange={(value) =>
-                    handleSelectChange("platform_name", value)
-                  }
-                >
-                  <SelectTrigger id="platformName">
-                    <SelectValue placeholder="Select platform name" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {platformNameOptions.map((platformName) => (
-                      <SelectItem key={platformName} value={platformName}>
-                        {platformName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={currentProduct.category}
-                  onValueChange={(value) =>
-                    handleSelectChange("category", value)
-                  }
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryOptions.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="price">Price</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={currentProduct.price}
-                  onChange={handleInputChange}
-                  placeholder="Enter price"
-                  required
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={currentProduct.description}
-                  onChange={handleInputChange}
-                  placeholder="Enter product description"
-                  rows={3}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="data_format">Data Format</Label>
-                <Textarea
-                  id="data_format"
-                  name="data_format"
-                  value={currentProduct.data_format}
-                  onChange={handleInputChange}
-                  placeholder="Enter data format"
-                  rows={3}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="important_notice">Important Notice</Label>
-                <Input
-                  id="important_notice"
-                  name="important_notice"
-                  value={currentProduct.important_notice}
-                  onChange={handleInputChange}
-                  placeholder="Any important information"
-                  required
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="files">Upload Files</Label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  <div className="space-y-1 text-center">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="files"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none"
-                      >
-                        <span>Upload files</span>
-                        <Input
-                          id="files"
-                          name="files"
-                          type="file"
-                          multiple
-                          onChange={handleTextFileChange}
-                          className="sr-only"
-                        />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      PDF, WORD or TXT files
-                    </p>
-                  </div>
-                </div>
-                {selectedFiles && selectedFiles.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      {selectedFiles.length} file(s) selected
-                    </p>
-                    <ul className="mt-1 text-xs text-gray-500 list-disc pl-5">
-                      {Array.from(selectedFiles).map((file, index) => (
-                        <li key={index}>{file.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="imageFiles">
-                  Upload Account Images/Screenshots
-                </Label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  <div className="space-y-1 text-center">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="imageFiles"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none"
-                      >
-                        <span>Upload Images</span>
-                        <Input
-                          id="imageFiles"
-                          name="imageFiles"
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleImageFileChange}
-                          className="sr-only"
-                        />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Upload up to 10mb of images
-                    </p>
-                  </div>
-                </div>
-                {selectedImageFiles && selectedImageFiles.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      {selectedImageFiles.length} file(s) selected
-                    </p>
-                    <ul className="mt-1 text-xs text-gray-500 list-disc pl-5">
-                      {selectedImageFiles.map((file, index) => (
-                        <li key={index}>{file.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="stock_quantity">Stock quantity</Label>:
-                <span> {currentProduct.stock_quantity} items selected</span>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={isMutating}>
-                {isMutating
-                  ? "Processing..."
-                  : isEditing
-                  ? "Update Product"
-                  : "Create Product"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Product Details</DialogTitle>
@@ -917,7 +508,7 @@ const DigitalProductsPage = () => {
             </TabsList>
 
             <TabsContent value="details">
-              {currentProduct && (
+              {selectedProduct && (
                 <div className="space-y-4 mt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -925,7 +516,7 @@ const DigitalProductsPage = () => {
                         ID
                       </Label>
                       <p className="font-medium break-all">
-                        {currentProduct.id}
+                        {selectedProduct.id}
                       </p>
                     </div>
                     <div>
@@ -933,7 +524,7 @@ const DigitalProductsPage = () => {
                         Platform
                       </Label>
                       <p className="font-medium">
-                        {currentProduct.platform_name}
+                        {selectedProduct.platform_name}
                       </p>
                     </div>
                     <div>
@@ -941,7 +532,7 @@ const DigitalProductsPage = () => {
                         Category
                       </Label>
                       <p className="font-medium capitalize">
-                        {currentProduct.category}
+                        {selectedProduct.category}
                       </p>
                     </div>
                     <div>
@@ -949,7 +540,7 @@ const DigitalProductsPage = () => {
                         Price
                       </Label>
                       <p className="font-medium">
-                        ${Number(currentProduct.price).toFixed(2)}
+                        ${Number(selectedProduct.price).toFixed(2)}
                       </p>
                     </div>
                     <div>
@@ -957,7 +548,7 @@ const DigitalProductsPage = () => {
                         Stock
                       </Label>
                       <p className="font-medium">
-                        {currentProduct.stock_quantity}
+                        {selectedProduct.stock_quantity}
                       </p>
                     </div>
                     <div>
@@ -966,24 +557,24 @@ const DigitalProductsPage = () => {
                       </Label>
                       <p className="font-medium">
                         {new Date(
-                          currentProduct.date_created
+                          selectedProduct.date_created
                         ).toLocaleDateString()}
                       </p>
                     </div>
-                    {/* <div>
-                            <Label className="text-sm text-muted-foreground">
-                              Status
-                            </Label>
-                            <p className="font-medium capitalize">
-                              {currentProduct.status}
-                            </p>
-                          </div> */}
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Status
+                      </Label>
+                      <p className="font-medium capitalize">
+                        {selectedProduct.status}
+                      </p>
+                    </div>
                     <div>
                       <Label className="text-sm text-muted-foreground">
                         Seller ID
                       </Label>
                       <p className="font-medium break-all">
-                        {currentProduct.seller_id}
+                        {selectedProduct.seller_id}
                       </p>
                     </div>
                   </div>
@@ -992,20 +583,20 @@ const DigitalProductsPage = () => {
                     <Label className="text-sm text-muted-foreground">
                       Description
                     </Label>
-                    <p className="font-medium">{currentProduct.description}</p>
+                    <p className="font-medium">{selectedProduct.description}</p>
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">
                       Data Format
                     </Label>
-                    <p className="font-medium">{currentProduct.data_format}</p>
+                    <p className="font-medium">{selectedProduct.data_format}</p>
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">
                       Important Notice
                     </Label>
                     <p className="font-medium">
-                      {currentProduct.important_notice}
+                      {selectedProduct.important_notice}
                     </p>
                   </div>
                 </div>
@@ -1057,10 +648,39 @@ const DigitalProductsPage = () => {
               </div>
             </TabsContent>
           </Tabs>
+          {/* Approve Button */}
+          {selectedProduct && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch(
+                    `https://aitool.asoroautomotive.com/api/products/${selectedProduct.id}/approve`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                    }
+                  );
+
+                  if (!res.ok) throw new Error("Failed to approve product");
+
+                  alert("Product approved!");
+                  setIsDialogOpen(false); // optionally close dialog
+                } catch (err) {
+                  alert("Error approving product");
+                  console.error(err);
+                }
+              }}
+              className="mt-6 w-full py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+            >
+              Approve Product
+            </button>
+          )}
         </DialogContent>
       </Dialog>
     </div>
   );
 };
 
-export default DigitalProductsPage;
+export default PendingDigitalProduct;

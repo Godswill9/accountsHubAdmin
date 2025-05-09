@@ -78,6 +78,7 @@ export interface Product {
   data_format: string; // 👈 Required here
   on_homepage?: string;
 date_created?: string;
+status: string;
 
 }
 
