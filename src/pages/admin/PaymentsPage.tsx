@@ -257,7 +257,7 @@ const PaymentsPage = () => {
                           <Eye className="h-4 w-4" />
                           <span className="sr-only">View</span>
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleCheckStatus(payment.payment_id)}
@@ -271,7 +271,7 @@ const PaymentsPage = () => {
                             }`}
                           />
                           <span className="sr-only">Check Status</span>
-                        </Button>
+                        </Button> */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -360,7 +360,7 @@ const PaymentsPage = () => {
                 </div>
               </div>
 
-              <div className="mt-4">
+              {/* <div className="mt-4">
                 <Button
                   variant="outline"
                   size="sm"
@@ -375,7 +375,7 @@ const PaymentsPage = () => {
                   />
                   Refresh Payment Status
                 </Button>
-              </div>
+              </div> */}
             </div>
           )}
         </DialogContent>

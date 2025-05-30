@@ -40,6 +40,8 @@ interface Order {
   buyer_email?: string;
   created_at: string;
   updatedAt?: string;
+  item_name?: string;
+  seller_id?: string;
 }
 
 const statusOptions = [
@@ -275,6 +277,12 @@ const OrdersPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm text-muted-foreground">
+                    Item Name
+                  </Label>
+                  <p className="font-medium">{selectedOrder.item_name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">
                     Order ID
                   </Label>
                   <p className="font-medium">{selectedOrder.order_id}</p>
@@ -307,6 +315,14 @@ const OrdersPage = () => {
                   </Label>
                   <p className="font-medium">
                     {selectedOrder.buyer_email || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">
+                    Seller ID
+                  </Label>
+                  <p className="font-medium">
+                    {selectedOrder.seller_id || "ADMIN"}
                   </p>
                 </div>
               </div>
