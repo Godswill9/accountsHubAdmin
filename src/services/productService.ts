@@ -79,7 +79,9 @@ export interface Product {
   on_homepage?: string;
 date_created?: string;
 status: string;
-
+images?: string[];
+homepage_position?: string;
+files?: string[];
 }
 
 export const DIGITAL_PRODUCTS_ENDPOINTS = {
@@ -112,8 +114,8 @@ export const fetchAllProducts = async (): Promise<Product[]> => {
 export const fetchProductDetails = async (id: string): Promise<Product> => {
   try {
     const response = await axios.get(DIGITAL_PRODUCTS_ENDPOINTS.DETAILS(id));
-    // console.log(response.data)
-    return response.data.file1;
+    // console.log(response.data.product)
+    return response.data.product
   } catch (error) {
     console.error(`Error fetching product details for ID ${id}:`, error);
     throw error;

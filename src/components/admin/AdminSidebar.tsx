@@ -134,6 +134,12 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               label="Pending digital products"
               onClick={onClose}
             />
+            <SidebarLink
+              href="/admin/dashboard/notifications"
+              icon={FileText}
+              label="Notifications"
+              onClick={onClose}
+            />
             {/* <SidebarLink
               href="/admin/dashboard/homepage-management"
               icon={LayoutDashboard}

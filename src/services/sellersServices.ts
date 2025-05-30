@@ -12,12 +12,12 @@ export const getAllSellers = async (): Promise<any> => {
 };
 
 // Get seller by ID
-export const getSellerById = async (sellerId: string): Promise<any> => {
+export const getSellerById = async (seller_Id: string): Promise<any> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/sellers/${sellerId}`);
+    const response = await axios.get(`${API_BASE_URL}/sellers/${seller_Id}`);
     return response.data; // Assuming the response contains the seller object
   } catch (error) {
-    console.error(`Error fetching seller with ID ${sellerId}:`, error);
+    console.error(`Error fetching seller with ID ${seller_Id}:`, error);
     throw error;
   }
 };

@@ -29,7 +29,8 @@ import ProfilePage from "./pages/admin/ProfilePage";
 import DigitalProductsPage from "./pages/admin/DigitalProductsPage";
 import HomepageManagementPage from "./pages/admin/HomepageManagementPage";
 import Sellers from "./pages/admin/Sellers";
-import PendingDigitalProduct from "./pages/admin/pendingDigitalProducts";
+import PendingDigitalProduct from "./pages/admin/PendingDigitalProducts";
+import NotificationsPage from "./pages/admin/Notifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +82,7 @@ const App = () => (
                 path="pending-digital-products"
                 element={<PendingDigitalProduct />}
               />
+              <Route path="notifications" element={<NotificationsPage />} />
               <Route
                 path="homepage-management"
                 element={<HomepageManagementPage />}

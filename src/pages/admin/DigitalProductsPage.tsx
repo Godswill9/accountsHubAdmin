@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import * as products from "@/services/productService";
+import { getSellerById } from "@/services/sellersServices";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,6 +45,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+interface Seller {
+  seller_id: string;
+  email: string;
+  fullName: string;
+  avatar?: string;
+  created_at: Date;
+  country?: string;
+  phoneNumber?: string;
+  preferred_currency?: string;
+  verification_status?: string;
+  preferred_language?: string;
+  acc_status: string;
+  wallet_balance: Number;
+}
+
 export interface Product {
   id: string;
   category: string;
@@ -58,6 +74,7 @@ export interface Product {
   date_created?: string;
   seller_id?: string;
   homepage_position?: string;
+  images?: string[]; // Array of image URLs
 }
 
 export interface DigitalProduct {
@@ -154,6 +171,7 @@ const DigitalProductsPage = () => {
   const [selectedTextFiles, setSelectedTextFiles] = useState<File[]>([]);
   const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
   const [files, setFiles] = useState<any[]>([]);
+  const [seller, setSeller] = useState<Seller | null>(null);
   const [images, setImages] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     platform: "",
@@ -211,28 +229,69 @@ const DigitalProductsPage = () => {
   useEffect(() => {
     if (currentProduct?.id) {
       fetchFiles(currentProduct.id);
-      fetchImages(currentProduct.id);
+      // fetchImages(currentProduct.id);
     }
   }, [currentProduct]);
 
-  const fetchFiles = async (productId: string) => {
-    // try {
-    //   const res = await fetch(`/api/files/${productId}`);
-    //   const blobs = await res.json();
-    //   setFiles(blobs);
-    // } catch (error) {
-    //   console.error("Failed to fetch files", error);
-    // }
+  const fetchFiles = async (arr) => {
+    try {
+      const filePromises = arr.map(async (item) => {
+        const response = await fetch(
+          `https://aitool.asoroautomotive.com/api/digital-product-file/${item.id}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        // For .txt and readable formats:
+        const blob = await response.blob();
+        const content = await blob.text();
+
+        return {
+          id: item.id,
+          name: item.file_path,
+          type: item.file_type,
+          content, // decoded string
+        };
+      });
+
+      return await Promise.all(filePromises);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      return [];
+    }
   };
 
-  const fetchImages = async (productId: string) => {
-    // try {
-    //   const res = await fetch(`/api/images/${productId}`);
-    //   const imageBlobs = await res.json();
-    //   setImages(imageBlobs);
-    // } catch (error) {
-    //   console.error("Failed to fetch images", error);
-    // }
+  const fetchImages = async (arr) => {
+    try {
+      const imagePromises = arr.map(async (item) => {
+        const response = await fetch(
+          `https://aitool.asoroautomotive.com/api/get-product-image/${item.id}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const imageSrc = await response.text(); // or response.blob() if needed
+        return imageSrc;
+      });
+
+      const imageBlobs = await Promise.all(imagePromises);
+      return imageBlobs;
+    } catch (error) {
+      console.error("Error fetching images:", error);
+      return [];
+    }
   };
 
   const createProductMutation = useMutation({
@@ -247,9 +306,34 @@ const DigitalProductsPage = () => {
     },
   });
 
-  const handleProductOpenDialogDetails = (product: any) => {
+  const handleProductOpenDialogDetails = async (product: any) => {
     setCurrentProduct(product);
     setIsProductDialogOpen(true);
+    showSellerDetails(product.seller_id);
+
+    const fetchedProduct = await products.fetchProductDetails(product.id);
+    console.log(fetchedProduct);
+    const imageBlobs = await fetchImages(fetchedProduct.images);
+    const fileBlobs = await fetchFiles(fetchedProduct.files);
+    console.log(imageBlobs);
+    console.log(fileBlobs);
+    setImages(imageBlobs);
+    setFiles(fileBlobs);
+  };
+
+  const showSellerDetails = async (sellerId: string) => {
+    try {
+      if (sellerId === null || sellerId === "admin") {
+        setSeller(null);
+        return;
+      } else {
+        const response = await getSellerById(sellerId);
+        // console.log(response.seller);
+        setSeller(response.seller);
+      }
+    } catch (error) {
+      console.error("Error fetching seller details", error);
+    }
   };
 
   const handleHomepageChange = async (
@@ -980,6 +1064,14 @@ const DigitalProductsPage = () => {
                           </div> */}
                     <div>
                       <Label className="text-sm text-muted-foreground">
+                        Seller Name
+                      </Label>
+                      <p className="font-medium break-all">
+                        {seller ? seller.fullName : "admin"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
                         Seller ID
                       </Label>
                       <p className="font-medium break-all">
@@ -1020,10 +1112,10 @@ const DigitalProductsPage = () => {
                       key={index}
                       className="flex justify-between items-center"
                     >
-                      <p className="truncate">File {index + 1}</p>
+                      <p className="truncate">{file.name}</p>
                       <a
-                        href={URL.createObjectURL(new Blob([file.data]))}
-                        download={`file-${index + 1}`}
+                        href={file.content}
+                        download={file.name}
                         className="text-blue-600 underline text-sm"
                       >
                         Download
@@ -1044,9 +1136,9 @@ const DigitalProductsPage = () => {
                   images.map((image, index) => (
                     <img
                       key={index}
-                      src={URL.createObjectURL(new Blob([image.data]))}
+                      src={image}
                       alt={`Product Image ${index + 1}`}
-                      className="rounded border shadow object-cover w-full max-h-60"
+                      className="rounded border shadow object-cover w-full -h-auto"
                     />
                   ))
                 ) : (
