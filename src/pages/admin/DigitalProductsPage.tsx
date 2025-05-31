@@ -162,6 +162,7 @@ import {
   postProductToHomepage,
   removeProductFromHomepage,
 } from "@/services/homepageService";
+import { getPlatformImage } from "@/lib/platformImages";
 
 const DigitalProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -708,7 +709,12 @@ const DigitalProductsPage = () => {
                   filteredProducts.map((product: Product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">
-                        {product.platform_name}
+                        <img
+                          src={getPlatformImage(product.platform_name)}
+                          alt=""
+                          className="inline-block h-8 w-8 mr-2"
+                        />
+                        {/* {product.platform_name} */}
                       </TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>
@@ -1017,7 +1023,12 @@ const DigitalProductsPage = () => {
                         Platform
                       </Label>
                       <p className="font-medium">
-                        {currentProduct.platform_name}
+                        {currentProduct.platform_name}{" "}
+                        <img
+                          src={getPlatformImage(currentProduct.platform_name)}
+                          alt=""
+                          className="inline-block h-8 w-8 mr-2"
+                        />
                       </p>
                     </div>
                     <div>

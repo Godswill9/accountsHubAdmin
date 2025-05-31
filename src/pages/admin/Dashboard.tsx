@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMetrics, getOrders, getAllUsers } from "@/services/adminService";
+import { getOrders, updateOrder, deleteOrder } from "@/services/orderService";
+// import { getMetrics, getOrders, getAllUsers } from "@/services/adminService";
 import { Users, ShoppingCart, DollarSign, TrendingUp } from "lucide-react";
 import {
   LineChart,
@@ -11,6 +12,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { getAllUsers } from "@/services/userService";
+import { getAllSellers } from "@/services/sellersServices";
 
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,57 +21,78 @@ const Dashboard = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [salesGrowth, setSalesGrowth] = useState<string>("0");
 
+  // 👇 Main useEffect to fetch all dashboard data
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const [metricsResponse, usersResponse, ordersResponse] =
-          await Promise.all([getMetrics(), getAllUsers(), getOrders()]);
+        setIsLoading(true);
 
-        setMetrics(metricsResponse.metrics);
-        setUsers(usersResponse);
+        // Fetch everything in parallel
+        const [ordersResponse, usersResponse, sellersResponse] =
+          await Promise.all([getOrders(), getAllUsers(), getAllSellers()]);
+
         setOrders(ordersResponse);
+        setUsers(usersResponse);
+        setSellers(sellersResponse);
 
-        // Process metrics for chart data
-        const salesMetrics = metricsResponse.metrics.filter(
-          (metric: any) => metric.name === "sales"
-        );
-
-        // Format data for chart
-        const formattedData = salesMetrics.map((metric: any) => ({
-          date: new Date(metric.date).toLocaleDateString("en-US", {
+        // Build chart data from orders
+        const formattedData = ordersResponse.map((order: any) => ({
+          date: new Date(order.created_at).toLocaleDateString("en-US", {
             month: "short",
             year: "numeric",
           }),
-          sales: metric.value,
+          sales: Number(order.amount),
         }));
 
         setSalesData(formattedData);
+
+        // Group sales by month
+        const monthGroups = formattedData.reduce((acc, item) => {
+          if (!acc[item.date]) acc[item.date] = 0;
+          acc[item.date] += item.sales;
+          return acc;
+        }, {} as Record<string, number>);
+
+        // Sort dates to get latest and previous months
+        const sortedMonths = Object.keys(monthGroups).sort(
+          (a, b) => new Date(a).getTime() - new Date(b).getTime()
+        );
+
+        if (sortedMonths.length >= 2) {
+          const prevMonth = sortedMonths[sortedMonths.length - 2];
+          const currMonth = sortedMonths[sortedMonths.length - 1];
+
+          const prevSales = monthGroups[prevMonth];
+          const currSales = monthGroups[currMonth];
+
+          const growth =
+            prevSales > 0
+              ? (((currSales - prevSales) / prevSales) * 100).toFixed(1)
+              : "0";
+
+          setSalesGrowth(growth);
+        }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("Error loading dashboard data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchDashboardData();
   }, []);
 
   // Calculate summary metrics
   const totalUsers = users.length;
+  const totalSellers = sellers.length;
   const totalOrders = orders.length;
   const totalSales = orders.reduce(
     (sum, order) => sum + Number(order.amount) * Number(order.quantity),
     0
   );
-  const salesGrowth =
-    salesData.length > 1
-      ? (
-          ((salesData[salesData.length - 1]?.sales - salesData[0]?.sales) /
-            salesData[0]?.sales) *
-          100
-        ).toFixed(1)
-      : "0";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -77,16 +101,30 @@ const Dashboard = () => {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Buyers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {isLoading ? "..." : totalUsers}
             </div>
-            <p className="text-xs text-muted-foreground">
+            {/* <p className="text-xs text-muted-foreground">
               +12% from last month
-            </p>
+            </p> */}
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Sellers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : totalSellers}
+            </div>
+            {/* <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p> */}
           </CardContent>
         </Card>
 
@@ -99,9 +137,9 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">
               {isLoading ? "..." : totalOrders}
             </div>
-            <p className="text-xs text-muted-foreground">
+            {/* <p className="text-xs text-muted-foreground">
               +18% from last month
-            </p>
+            </p> */}
           </CardContent>
         </Card>
 
@@ -112,11 +150,17 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${isLoading ? "..." : totalSales.toFixed(2)}
+              {isLoading
+                ? "..."
+                : new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(totalSales)}
             </div>
-            <p className="text-xs text-muted-foreground">
+
+            {/* <p className="text-xs text-muted-foreground">
               +25% from last month
-            </p>
+            </p> */}
           </CardContent>
         </Card>
 
@@ -154,8 +198,28 @@ const Dashboard = () => {
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
+
+                  <YAxis
+                    tickFormatter={(value) =>
+                      new Intl.NumberFormat("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                        maximumFractionDigits: 0, // optional: round to dollars
+                      }).format(value)
+                    }
+                  />
+
+                  <Tooltip
+                    formatter={(value) =>
+                      new Intl.NumberFormat("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                      }).format(
+                        typeof value === "number" ? value : Number(value)
+                      )
+                    }
+                  />
+
                   <Line
                     type="monotone"
                     dataKey="sales"
@@ -189,9 +253,7 @@ const Dashboard = () => {
                     className="flex justify-between items-center"
                   >
                     <div>
-                      <p className="text-sm font-medium">
-                        Order #{order.order_id}
-                      </p>
+                      <p className="text-sm font-medium">{order.item_name}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString()}
                       </p>

@@ -64,7 +64,26 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
           </p>
         </div>
         <div className="flex items-center gap-1 sm:gap-4">
-          <DropdownMenu>
+          <a href="/admin/dashboard/notifications">
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              {/* <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+              3
+            </span> */}
+              <span className="sr-only">Notifications</span>
+            </Button>
+          </a>
+          <a href="/admin/dashboard/profile">
+            <Button variant="ghost" size="icon" className="relative">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>
+                  {admin?.username?.charAt(0) || "A"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="sr-only">Profile</span>
+            </Button>
+          </a>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
@@ -119,7 +138,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
         </div>
       </div>
     </header>

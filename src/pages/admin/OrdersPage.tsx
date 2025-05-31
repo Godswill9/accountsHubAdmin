@@ -30,6 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getPlatformImage } from "@/lib/platformImages";
 
 interface Order {
   order_id: string;
@@ -182,6 +183,7 @@ const OrdersPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Platform</TableHead>
                   <TableHead>Order ID</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
@@ -199,6 +201,13 @@ const OrdersPage = () => {
                 ) : (
                   filteredOrders.map((order: Order) => (
                     <TableRow key={order.order_id}>
+                      <TableCell className="font-medium">
+                        <img
+                          src={getPlatformImage(order.item_name)}
+                          alt=""
+                          className="inline-block h-8 w-8 mr-2"
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         {order.order_id}
                       </TableCell>
@@ -279,7 +288,12 @@ const OrdersPage = () => {
                   <Label className="text-sm text-muted-foreground">
                     Item Name
                   </Label>
-                  <p className="font-medium">{selectedOrder.item_name}</p>
+                  <p className="font-medium">{selectedOrder.item_name}</p>{" "}
+                  <img
+                    src={getPlatformImage(selectedOrder.item_name)}
+                    alt=""
+                    className="inline-block h-8 w-8 mr-2"
+                  />
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">

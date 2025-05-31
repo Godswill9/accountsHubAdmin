@@ -87,8 +87,15 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
             to="/admin/dashboard"
             className="flex items-center gap-2 font-bold text-xl"
           >
-            <LayoutDashboard className="h-5 w-5 text-primary" />
-            <span>Admin Portal</span>
+            <img
+              src="https://accountshub.onrender.com/lovable-uploads/b8bc2363-f8b3-49a4-bec6-1490e3aa106a-removebg-preview.png"
+              alt="AccountsHub Logo"
+              className="h-10 w-auto bg-white p-2 rounded-full"
+            />
+            {/* <LayoutDashboard className="h-5 w-5 text-primary" /> */}
+            <span className="text-sm bg-white p-2 rounded-full">
+              AccountsHub Admin Dashboard
+            </span>
           </Link>
           {isMobile && (
             <Button
@@ -134,12 +141,12 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               label="Pending digital products"
               onClick={onClose}
             />
-            <SidebarLink
+            {/* <SidebarLink
               href="/admin/dashboard/notifications"
               icon={FileText}
               label="Notifications"
               onClick={onClose}
-            />
+            /> */}
             {/* <SidebarLink
               href="/admin/dashboard/homepage-management"
               icon={LayoutDashboard}
@@ -176,18 +183,18 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               label="Wallet Management"
               onClick={onClose}
             />
-            <SidebarLink
+            {/* <SidebarLink
               href="/admin/dashboard/analytics"
               icon={BarChart3}
               label="Analytics"
               onClick={onClose}
-            />
-            <SidebarLink
+            /> */}
+            {/* <SidebarLink
               href="/admin/dashboard/profile"
               icon={User}
               label="Profile"
               onClick={onClose}
-            />
+            /> */}
           </nav>
         </div>
 

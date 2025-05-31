@@ -156,6 +156,7 @@ import {
 } from "@/services/homepageService";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { getSellerById } from "@/services/sellersServices";
+import { getPlatformImage } from "@/lib/platformImages";
 
 const PendingDigitalProduct = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -527,7 +528,12 @@ const PendingDigitalProduct = () => {
                       </TableCell>
 
                       <TableCell className="font-medium">
-                        {product.platform_name}
+                        <img
+                          src={getPlatformImage(product.platform_name)}
+                          alt=""
+                          className="inline-block h-8 w-8 mr-2"
+                        />
+                        {/* {product.platform_name} */}
                       </TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>
@@ -606,7 +612,12 @@ const PendingDigitalProduct = () => {
                         Platform
                       </Label>
                       <p className="font-medium">
-                        {selectedProduct.platform_name}
+                        {selectedProduct.platform_name}{" "}
+                        <img
+                          src={getPlatformImage(selectedProduct.platform_name)}
+                          alt=""
+                          className="inline-block h-8 w-8 mr-2"
+                        />
                       </p>
                     </div>
                     <div>
