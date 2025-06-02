@@ -2,7 +2,7 @@ import redditLogo from './reddit.jpg'
 import twitchLogo from './twitch.png'
 import tumblrLogo from './tumblr.png'
 import kakaotalkLogo from './kakaotalk.png'
-import soundcloudLogo from './soundcloud.png'
+import soundcloudLogo from './soundcloud.jpg'
 import wechatlogo from './wechat.png'
 
 
