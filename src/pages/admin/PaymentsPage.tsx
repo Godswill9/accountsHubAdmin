@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import axios from "axios";
 import {
   Table,
   TableBody,
@@ -51,7 +52,11 @@ const PaymentsPage = () => {
     const fetchPayments = async () => {
       try {
         const paymentResponse = await getAllPayments();
-        console.log(paymentResponse);
+        // console.log(paymentResponse);
+        paymentResponse.payments.forEach((item, i)=>{
+          // console.log(item)
+          updatePaymentSeen(item.payment_id)
+        })
         setallPayments(paymentResponse.payments);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -60,6 +65,18 @@ const PaymentsPage = () => {
 
     fetchPayments();
   }, []);
+
+     const updatePaymentSeen = async (PaymentId: string) => {
+    try {
+      const response = await axios.put(
+        `https://aitool.asoroautomotive.com/api/admin-payment-seen/${PaymentId}`
+      );
+      console.log("Payment marked as seen:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error marking Payment as seen:", error);
+    }
+  };
 
   const queryClient = useQueryClient();
 
@@ -225,64 +242,56 @@ const PaymentsPage = () => {
                   </TableRow>
                 ) : (
                   filteredPayments.map((payment: Payment) => (
-                    <TableRow key={payment.payment_id}>
-                      <TableCell className="font-medium">
-                        {payment.payment_id}
-                      </TableCell>
-                      <TableCell>{payment.user_id}</TableCell>
-                      <TableCell>{payment.payment_type}</TableCell>
-                      <TableCell>
-                        {/* {payment.currency}  */}$
-                        {Number(payment.amount).toFixed(2)}
-                      </TableCell>
-                      <TableCell>{payment.payment_gateway}</TableCell>
-                      <TableCell>
-                        <div
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeStyle(
-                            payment.payment_status
-                          )}`}
-                        >
-                          {payment.payment_status}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(payment.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewPaymentDetails(payment)}
-                        >
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">View</span>
-                        </Button>
-                        {/* <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleCheckStatus(payment.payment_id)}
-                          disabled={paymentStatusMutation.isPending}
-                        >
-                          <RefreshCw
-                            className={`h-4 w-4 ${
-                              paymentStatusMutation.isPending
-                                ? "animate-spin"
-                                : ""
-                            }`}
-                          />
-                          <span className="sr-only">Check Status</span>
-                        </Button> */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeletePayment(payment.user_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+  <TableRow
+    key={payment.payment_id}
+    className={
+      payment.seen_by_admin === null
+        ? "bg-blue-50 border-l-[5px] border-blue-500"
+        : ""
+    }
+  >
+    <TableCell className="font-medium">
+      {payment.payment_id}
+    </TableCell>
+    <TableCell>{payment.user_id}</TableCell>
+    <TableCell>{payment.payment_type}</TableCell>
+    <TableCell>
+      ${Number(payment.amount).toFixed(2)}
+    </TableCell>
+    <TableCell>{payment.payment_gateway}</TableCell>
+    <TableCell>
+      <div
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeStyle(
+          payment.payment_status
+        )}`}
+      >
+        {payment.payment_status}
+      </div>
+    </TableCell>
+    <TableCell>
+      {new Date(payment.created_at).toLocaleDateString()}
+    </TableCell>
+    <TableCell className="text-right space-x-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => handleViewPaymentDetails(payment)}
+      >
+        <Eye className="h-4 w-4" />
+        <span className="sr-only">View</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => handleDeletePayment(payment.user_id)}
+      >
+        <Trash2 className="h-4 w-4" />
+        <span className="sr-only">Delete</span>
+      </Button>
+    </TableCell>
+  </TableRow>
+))
+
                 )}
               </TableBody>
             </Table>

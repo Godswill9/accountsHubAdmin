@@ -48,6 +48,10 @@ const NotificationsPage = () => {
       `https://aitool.asoroautomotive.com/api/notifications/admin`
     );
     setNotifications(res.data.data);
+    res.data.data.forEach((item, i)=>{
+      // console.log(item)
+      updateNotificationSeen(item.id)
+    })
     setFiltered(res.data.data);
   };
 
@@ -81,6 +85,18 @@ const NotificationsPage = () => {
       `https://aitool.asoroautomotive.com/api/notifications/admin/${id}`
     );
     fetchNotifications(admin.admin_id);
+  };
+
+      const updateNotificationSeen = async (NotificationId: string) => {
+    try {
+      const response = await axios.put(
+        `https://aitool.asoroautomotive.com/api/notice-seen/${NotificationId}`
+      );
+      console.log("Notification marked as seen:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error marking Notification as seen:", error);
+    }
   };
 
   //   const handleDeleteAll = async () => {
@@ -201,27 +217,43 @@ const NotificationsPage = () => {
       </Button> */}
 
       {/* Notification Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        {filtered.map((n) => (
-          <Card key={n.id}>
-            <CardContent className="p-4">
-              <h4 className="text-lg font-semibold">{n.title}</h4>
-              <p>{n.notification_details}</p>
-              <p className="text-sm text-gray-500">
-                {n.priority} |{" "}
-                {format(new Date(n.created_at), "yyyy-MM-dd hh:mm a")}
-              </p>
-              <Button
-                variant="outline"
-                className="mt-2"
-                onClick={() => handleDelete(n.id)}
-              >
-                Delete
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+  {filtered.map((n) => (
+    <Card
+      key={n.id}
+      className={`transition-shadow duration-300 ${
+        n.seen === "FALSE" 
+          ? "border-2 border-blue-500 bg-blue-50 shadow-md"
+          : "border border-gray-200 bg-white"
+      }`}
+    >
+      <CardContent className="p-5">
+        <div className="flex justify-between items-center mb-2">
+          <h4 className={`text-lg font-semibold ${!n.seen ? "text-blue-700" : "text-gray-900"}`}>
+            {n.title}
+          </h4>
+          {!n.seen && (
+            <span className="inline-block px-2 py-0.5 text-xs font-semibold text-white bg-blue-600 rounded-full">
+              New
+            </span>
+          )}
+        </div>
+        <p className="mb-3">{n.notification_details}</p>
+        <p className="text-sm text-gray-500">
+          {n.priority} | {format(new Date(n.created_at), "yyyy-MM-dd hh:mm a")}
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => handleDelete(n.id)}
+        >
+          Delete
+        </Button>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+
     </div>
   );
 };

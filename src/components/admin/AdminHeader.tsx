@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import axios from "axios";
+
 
 interface AdminHeaderProps {
   toggleSidebar: () => void;
@@ -22,6 +24,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const { admin, logout } = useAuth();
   const [greeting, setGreeting] = useState("");
   const isMobile = useIsMobile();
+   const [notifications, setNotifications] = useState([]);
 
   // Listen for custom toggle sidebar event from sidebar close button
   useEffect(() => {
@@ -37,6 +40,30 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting("Good evening");
   }, []);
+
+  const fetchNotifications = async (adminId) => {
+  try {
+    const res = await axios.get(
+      `https://aitool.asoroautomotive.com/api/notifications/admin`
+    );
+
+    const filteredNotifications = res.data.data
+      .filter((notification) => notification.seen === "FALSE")  // Only unseen
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Sort by newest
+
+    console.log(filteredNotifications);
+    setNotifications(filteredNotifications);
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+  }
+};
+
+
+  useEffect(() => {
+    if (admin?.admin_id) {
+      fetchNotifications(admin.admin_id);
+    }
+  }, [admin]);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-gray-200 bg-white px-3 sm:px-4 shadow-sm">
@@ -66,12 +93,15 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
         <div className="flex items-center gap-1 sm:gap-4">
           <a href="/admin/dashboard/notifications">
             <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              {/* <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-              3
-            </span> */}
-              <span className="sr-only">Notifications</span>
-            </Button>
+  <Bell className="h-5 w-5" />
+  {notifications.length > 0 && (
+    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-xs text-white">
+      {notifications.length}
+    </span>
+  )}
+  <span className="sr-only">Notifications</span>
+</Button>
+
           </a>
           <a href="/admin/dashboard/profile">
             <Button variant="ghost" size="icon" className="relative">

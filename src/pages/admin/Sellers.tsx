@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getAllSellers } from "@/services/sellersServices.ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -38,6 +39,9 @@ const Sellers = () => {
         const response = await getAllSellers();
         console.log(response);
         setSellers(response);
+         response.forEach((item, i)=>{
+          updateSellerSeen(item.seller_id)
+        })
       } catch (error) {
         console.error("Error fetching sellers:", error);
       } finally {
@@ -52,6 +56,18 @@ const Sellers = () => {
     // seller.sellername.toLowerCase().includes(searchQuery.toLowerCase()) ||
     seller.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+     const updateSellerSeen = async (sellerId: string) => {
+    try {
+      const response = await axios.put(
+        `https://aitool.asoroautomotive.com/api/sellers/updateSeen/${sellerId}`
+      );
+      console.log("seller marked as seen:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error marking seller as seen:", error);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -68,91 +84,90 @@ const Sellers = () => {
         </Button> */}
       </div>
 
-      <Card className="glass-card">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>All sellers</CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search sellers..."
-                className="pl-8 md:w-[240px] lg:w-[320px]"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-60">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
+    <Card className="glass-card">
+  <CardHeader className="pb-3">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <CardTitle>All sellers</CardTitle>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search sellers..."
+          className="pl-8 md:w-[240px] lg:w-[320px]"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    {isLoading ? (
+      <div className="flex items-center justify-center h-60">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    ) : (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Full Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Joined</TableHead>
+            <TableHead>Verification status</TableHead>
+            <TableHead>Wallet balance</TableHead>
+            <TableHead>Account status</TableHead>
+            <TableHead>Id</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredsellers.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-10">
+                No sellers found
+              </TableCell>
+            </TableRow>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {/* <TableHead>Name</TableHead> */}
-                  <TableHead>Full Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Verification status</TableHead>
-                  <TableHead>Wallet balance</TableHead>
-                  <TableHead>Account status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredsellers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-10">
-                      No sellers found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredsellers.map((seller) => (
-                    <TableRow key={seller.seller_id}>
-                      {/* <TableCell className="font-medium">
-                        {seller.sellername}
-                      </TableCell> */}
-                      <TableCell>{seller.fullName}</TableCell>
-                      <TableCell>{seller.email}</TableCell>
-                      <TableCell>
-                        {new Date(seller.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {seller.verification_status === "true" ? (
-                          <span className="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
-                            Verified
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
-                            Unverified
-                          </span>
-                        )}
-                      </TableCell>
-
-                      <TableCell>${Number(seller.wallet_balance)}</TableCell>
-                      <TableCell>{seller.acc_status}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {/* <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button> */}
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            filteredsellers.map((seller) => (
+              <TableRow
+                key={seller.seller_id}
+                className={`transition-colors duration-300 ${
+                  seller.seen === null
+                    ? "bg-blue-50 border-l-4 border-blue-600 font-semibold"
+                    : ""
+                }`}
+              >
+                <TableCell>{seller.fullName}</TableCell>
+                <TableCell>{seller.email}</TableCell>
+                <TableCell>{new Date(seller.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {seller.verification_status === "true" ? (
+                    <span className="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                      Unverified
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>${Number(seller.wallet_balance)}</TableCell>
+                <TableCell>{seller.acc_status}</TableCell>
+                <TableCell>{seller.seller_id}</TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button variant="ghost" size="icon">
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
           )}
-        </CardContent>
-      </Card>
+        </TableBody>
+      </Table>
+    )}
+  </CardContent>
+</Card>
+
     </div>
   );
 };

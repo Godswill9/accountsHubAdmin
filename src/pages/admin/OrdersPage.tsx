@@ -3,6 +3,7 @@ import { getOrders, updateOrder, deleteOrder } from "@/services/orderService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import axios from "axios";
 import {
   Table,
   TableBody,
@@ -67,6 +68,10 @@ const OrdersPage = () => {
       try {
         const ordersResponse = await getOrders();
         // console.log(ordersResponse);
+        ordersResponse.forEach((item, i)=>{
+          // console.log(item)
+          updateOrdersSeen(item.order_id)
+        })
         setOrders(ordersResponse);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -75,6 +80,18 @@ const OrdersPage = () => {
 
     fetchOrders();
   }, []);
+
+      const updateOrdersSeen = async (OrdersId: string) => {
+    try {
+      const response = await axios.put(
+        `https://aitool.asoroautomotive.com/api/admin-order-seen/${OrdersId}`
+      );
+      console.log("Orders marked as seen:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error marking Orders as seen:", error);
+    }
+  };
 
   const queryClient = useQueryClient();
 
@@ -158,115 +175,130 @@ const OrdersPage = () => {
         </div>
       </div>
 
-      <Card className="glass-card">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>All Orders</CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search orders..."
-                className="pl-8 md:w-[240px] lg:w-[320px]"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-60">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
+    <Card className="glass-card">
+  <CardHeader className="pb-3">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <CardTitle>All Orders</CardTitle>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search orders..."
+          className="pl-8 md:w-[240px] lg:w-[320px]"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+    </div>
+  </CardHeader>
+
+  <CardContent>
+    {isLoading ? (
+      <div className="flex items-center justify-center h-60">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    ) : (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Platform</TableHead>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Seen</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+
+        <TableBody>
+          {filteredOrders.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-10">
+                No orders found
+              </TableCell>
+            </TableRow>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Platform</TableHead>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrders.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      No orders found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredOrders.map((order: Order) => (
-                    <TableRow key={order.order_id}>
-                      <TableCell className="font-medium">
-                        <img
-                          src={getPlatformImage(order.item_name)}
-                          alt=""
-                          className="inline-block h-8 w-8 mr-2"
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {order.order_id}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(order.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            order.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : order.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : order.status === "processing"
-                              ? "bg-blue-100 text-blue-800"
-                              : order.status === "shipped"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {order.status.charAt(0).toUpperCase() +
-                            order.status.slice(1)}
-                        </div>
-                      </TableCell>
-                      <TableCell>${Number(order.amount).toFixed(2)}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(order, true)}
-                        >
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">View</span>
-                        </Button>
-                        {/* <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(order, false)}
-                        >
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button> */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteOrder(order.order_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            filteredOrders.map((order: Order) => (
+              <TableRow
+                key={order.order_id}
+                className={order.seen_by_admin === null ? "bg-yellow-50 border-l-[5px] border-yellow-400" : ""}
+              >
+                <TableCell className="font-medium">
+                  <img
+                    src={getPlatformImage(order.item_name)}
+                    alt=""
+                    className="inline-block h-8 w-8 mr-2"
+                  />
+                </TableCell>
+
+                <TableCell className="font-medium">
+                  {order.order_id}
+                </TableCell>
+
+                <TableCell>
+                  {new Date(order.created_at).toLocaleDateString()}
+                </TableCell>
+
+                <TableCell>
+                  <div
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      order.status === "completed"
+                        ? "bg-green-100 text-green-800"
+                        : order.status === "cancelled"
+                        ? "bg-red-100 text-red-800"
+                        : order.status === "processing"
+                        ? "bg-blue-100 text-blue-800"
+                        : order.status === "shipped"
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </div>
+                </TableCell>
+
+                <TableCell>${Number(order.amount).toFixed(2)}</TableCell>
+
+                <TableCell>
+                  {order.seen_by_admin === null ? (
+                    <span className="inline-block px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                      New
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                      Seen
+                    </span>
+                  )}
+                </TableCell>
+
+                <TableCell className="text-right space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleOpenDialog(order, true)}
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span className="sr-only">View</span>
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteOrder(order.order_id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
           )}
-        </CardContent>
-      </Card>
+        </TableBody>
+      </Table>
+    )}
+  </CardContent>
+</Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">

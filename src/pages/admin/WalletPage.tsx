@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { getWalletBalance, addFunds, withdrawFunds, transferFunds } from "@/services/walletService";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,20 +9,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Wallet, ArrowDownToLine, ArrowUpFromLine, RefreshCw } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import axios from "axios";
+
 
 const WalletPage = () => {
   const [walletId, setWalletId] = useState("");
   const [amount, setAmount] = useState("");
   const [recipientId, setRecipientId] = useState("");
-  const [activeTab, setActiveTab] = useState("check");
+  const [user, setUser] = useState({});
+  const [seller, setseller] = useState({});
+  const [activeTab, setActiveTab] = useState("myAcc");
   
   const queryClient = useQueryClient();
 
-  const { data: balanceData, refetch, isLoading } = useQuery({
+  const { data: balanceData, isLoading } = useQuery({
     queryKey: ['walletBalance', walletId],
     queryFn: () => getWalletBalance(walletId),
     enabled: false, // Don't run query on component mount
   });
+
+  const { admin, isAuthenticated } = useAuth();
+
+  const [newNotification, setNewNotification] = useState({
+    adminId: "",
+    priority: "",
+    details: "",
+    email: "",
+    title: "",
+    notification_type: "",
+  });
+
+  useEffect(() => {
+    if (admin?.admin_id) {
+      console.log(admin)
+      setUser({})
+      // fetchNotifications(admin.admin_id);
+    }
+    // setAdmin(admin)
+  }, [admin]);
+  
 
   const addFundsMutation = useMutation({
     mutationFn: (data: { userId: string, amount: number }) => addFunds(data),
@@ -61,13 +87,45 @@ const WalletPage = () => {
     }
   });
 
-  const handleCheckBalance = (e: React.FormEvent) => {
+  const handleCheckBalance = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!walletId) {
       toast.error("Please enter a wallet ID");
       return;
     }
-    refetch();
+     try {
+    const res = await axios.get(
+      `https://aitool.asoroautomotive.com/api/users/${walletId}`
+    );
+
+  //  console.log(res.data)
+   setUser(res.data)
+  } catch (error) {
+    toast.error("Failed to fetch buyer");
+    // console.error("Error fetching notifications:", error);
+  }
+    
+  };
+ 
+ 
+  const handleCheckSellerBalance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!walletId) {
+      toast.error("Please enter a wallet ID");
+      return;
+    }
+     try {
+    const res = await axios.get(
+      `https://aitool.asoroautomotive.com/api/sellers/${walletId}`
+    );
+
+  //  console.log(res.data)
+   setseller(res.data)
+  } catch (error) {
+    toast.error("Failed to fetch seller");
+    // console.error("Error fetching notifications:", error);
+  }
+    
   };
 
   const handleAddFunds = (e: React.FormEvent) => {
@@ -140,18 +198,69 @@ const WalletPage = () => {
       </div>
 
       <Tabs defaultValue="check" onValueChange={setActiveTab} value={activeTab}>
-        <TabsList className="grid grid-cols-4 w-full md:w-[600px]">
-          <TabsTrigger value="check">Check Balance</TabsTrigger>
-          <TabsTrigger value="add">Add Funds</TabsTrigger>
-          <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
-          <TabsTrigger value="transfer">Transfer</TabsTrigger>
-        </TabsList>
         
-        <div className="mt-6">
+        <TabsList className="flex flex-wrap gap-2 w-full md:grid md:grid-cols-3 lg:grid-cols-4">
+  <TabsTrigger value="myAcc">Admin Balance</TabsTrigger>
+  <TabsTrigger value="check">Check Balance (Users)</TabsTrigger>
+  <TabsTrigger value="checkSellers">Check Balance (Sellers)</TabsTrigger>
+  <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
+    {/* <TabsTrigger value="add">Add Funds</TabsTrigger> */}
+  <TabsTrigger value="transfer">Transfer</TabsTrigger>
+</TabsList>
+
+{/* <TabsList
+  className="grid w-full gap-2
+             grid-cols-1
+             sm:grid-cols-2
+             md:grid-cols-3
+             lg:grid-cols-4"
+>
+  <TabsTrigger value="myAcc">Admin Balance</TabsTrigger>
+  <TabsTrigger value="check">Check Balance (Users)</TabsTrigger>
+  <TabsTrigger value="checkSellers">Check Balance (Sellers)</TabsTrigger>
+  <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
+  <TabsTrigger value="transfer">Transfer</TabsTrigger>
+</TabsList> */}
+
+        
+    <div className="mt-32 md:mt-16 lg:mt-16">
+          <TabsContent value="myAcc">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle>Wallet Balance</CardTitle>
+                <CardDescription>
+                  View your current balance
+                </CardDescription>
+              </CardHeader>
+             {admin && (
+  <CardFooter className="flex flex-col items-start border-t mt-4">
+    <div className="w-full bg-muted/50 p-5 rounded-xl shadow-sm">
+      <h4 className="text-base font-semibold text-primary mb-4">Admin Wallet Info</h4>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div className="flex flex-col">
+          <span className="text-muted-foreground font-medium">Wallet ID</span>
+          <span className="text-[15px] font-semibold">{admin.admin_id}</span>
+        </div>
+
+        <div className="flex flex-col">
+          <span className="text-muted-foreground font-medium">Current Balance</span>
+         <span className="text-lg font-bold text-green-600">
+  ${Number(admin.wallet_balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+</span>
+
+        </div>
+      </div>
+    </div>
+  </CardFooter>
+)}
+
+            </Card>
+          </TabsContent>
           <TabsContent value="check">
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle>Check Wallet Balance</CardTitle>
+                <CardTitle>Check Wallet Balance (Users)</CardTitle>
                 <CardDescription>
                   View the current balance for a user's wallet
                 </CardDescription>
@@ -174,20 +283,84 @@ const WalletPage = () => {
                 </form>
               </CardContent>
               
-              {balanceData && (
-                <CardFooter className="flex flex-col items-start border-t">
-                  <div className="bg-muted p-4 rounded-md w-full mt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-muted-foreground">Wallet ID:</p>
-                      <p className="font-medium">{walletId}</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-muted-foreground">Current Balance:</p>
-                      <p className="text-xl font-bold text-primary">${balanceData.balance.toFixed(2)}</p>
-                    </div>
+             {user?.id && (
+  <CardFooter className="flex flex-col items-start border-t">
+    <div className="bg-muted p-4 rounded-md w-full mt-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-muted-foreground">User:</p>
+        <p className="font-medium">{user.fullName}</p>
+      </div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-muted-foreground">User Email:</p>
+        <p className="font-medium">{user.email}</p>
+      </div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-muted-foreground">Wallet ID:</p>
+        <p className="font-medium">{user.id}</p>
+      </div>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-muted-foreground">Current Balance:</p>
+        <p className="text-xl font-bold text-primary">
+          ${Number(user.wallet_balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
+      </div>
+    </div>
+  </CardFooter>
+)}
+
+            </Card>
+          </TabsContent>
+          <TabsContent value="checkSellers">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle>Check Wallet Balance (Sellers)</CardTitle>
+                <CardDescription>
+                  View the current balance for a seller's wallet
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleCheckSellerBalance} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="walletId">Wallet ID (seller ID)</Label>
+                    <Input
+                      id="walletId"
+                      placeholder="Enter wallet ID"
+                      value={walletId}
+                      onChange={(e) => setWalletId(e.target.value)}
+                      required
+                    />
                   </div>
-                </CardFooter>
-              )}
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Checking..." : "Check Balance"}
+                  </Button>
+                </form>
+              </CardContent>
+              
+             {seller?.seller_id && (
+  <CardFooter className="flex flex-col items-start border-t">
+    <div className="bg-muted p-4 rounded-md w-full mt-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-muted-foreground">seller:</p>
+        <p className="font-medium">{seller.fullName}</p>
+      </div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-muted-foreground">seller Email:</p>
+        <p className="font-medium">{seller.email}</p>
+      </div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-muted-foreground">Wallet ID:</p>
+        <p className="font-medium">{seller.seller_id}</p>
+      </div>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-muted-foreground">Current Balance:</p>
+        <p className="text-xl font-bold text-primary">
+          ${Number(seller.wallet_balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
+      </div>
+    </div>
+  </CardFooter>
+)}
+
             </Card>
           </TabsContent>
           
@@ -338,7 +511,7 @@ const WalletPage = () => {
         </div>
       </Tabs>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="glass-card">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -383,7 +556,7 @@ const WalletPage = () => {
             </ul>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 };

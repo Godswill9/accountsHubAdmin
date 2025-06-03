@@ -165,6 +165,7 @@ const PendingDigitalProduct = () => {
   const [files, setFiles] = useState<any[]>([]);
   const [images, setImages] = useState<any[]>([]);
   const [seller, setSeller] = useState<Seller | null>(null);
+   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     platform: "",
     category: "",
@@ -196,66 +197,71 @@ const PendingDigitalProduct = () => {
     }
   }, [selectedProduct]);
 
-  const fetchFiles = async (arr) => {
-    try {
-      const filePromises = arr.map(async (item) => {
-        const response = await fetch(
-          `https://aitool.asoroautomotive.com/api/digital-product-file/${item.id}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+ const fetchFiles = async (arr) => {
+  setLoading(true);
+  try {
+    const filePromises = arr.map(async (item) => {
+      const response = await fetch(
+        `https://aitool.asoroautomotive.com/api/digital-product-file/${item.id}`,
+        {
+          method: "GET",
+          credentials: "include",
         }
+      );
 
-        // For .txt and readable formats:
-        const blob = await response.blob();
-        const content = await blob.text();
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-        return {
-          id: item.id,
-          name: item.file_path,
-          type: item.file_type,
-          content, // decoded string
-        };
-      });
+      const blob = await response.blob();
+      const content = await blob.text();
+      return {
+        id: item.id,
+        name: item.file_path,
+        type: item.file_type,
+        content,
+      };
+    });
 
-      return await Promise.all(filePromises);
-    } catch (error) {
-      console.error("Error fetching files:", error);
-      return [];
-    }
-  };
-
-  const fetchImages = async (arr) => {
-    try {
-      const imagePromises = arr.map(async (item) => {
-        const response = await fetch(
-          `https://aitool.asoroautomotive.com/api/get-product-image/${item.id}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+    const result = await Promise.all(filePromises);
+    setLoading(false);
+    return result;
+  } catch (error) {
+    setLoading(false);
+    console.error("Error fetching files:", error);
+    return [];
+  }
+};
+const fetchImages = async (arr) => {
+  setLoading(true);
+  try {
+    const imagePromises = arr.map(async (item) => {
+      const response = await fetch(
+        `https://aitool.asoroautomotive.com/api/get-product-image/${item.id}`,
+        {
+          method: "GET",
+          credentials: "include",
         }
+      );
 
-        const imageSrc = await response.text(); // or response.blob() if needed
-        return imageSrc;
-      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-      const imageBlobs = await Promise.all(imagePromises);
-      return imageBlobs;
-    } catch (error) {
-      console.error("Error fetching images:", error);
-      return [];
-    }
-  };
+      const imageSrc = await response.text();
+      return imageSrc;
+    });
+
+    const imageBlobs = await Promise.all(imagePromises);
+    setLoading(false);
+    return imageBlobs;
+  } catch (error) {
+    setLoading(false);
+    console.error("Error fetching images:", error);
+    return [];
+  }
+};
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -384,201 +390,263 @@ const PendingDigitalProduct = () => {
           </p>
         </div>
       </div>
-      <PlatformFilter
+      {/* <PlatformFilter
         platforms={platforms}
         selectedPlatform={selectedPlatform}
         onChange={(value) => setSelectedPlatform(value)}
+      /> */}
+    <div className="flex flex-wrap gap-6 mb-6 items-end">
+  {/* Platform */}
+  <div className="flex flex-col">
+    <label htmlFor="platform" className="mb-1 text-sm font-medium text-gray-700">
+      Platform
+    </label>
+    <select
+      id="platform"
+      value={filters.platform}
+      onChange={(e) =>
+        setFilters((prev) => ({ ...prev, platform: e.target.value }))
+      }
+      className="border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+    >
+      <option value="">All Platforms</option>
+      {platforms.map((p) => (
+        <option key={p} value={p}>
+          {p}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Category */}
+  <div className="flex flex-col min-w-[160px]">
+    <label htmlFor="category" className="mb-1 text-sm font-medium text-gray-700">
+      Category
+    </label>
+    <select
+      id="category"
+      value={filters.category}
+      onChange={(e) =>
+        setFilters((prev) => ({ ...prev, category: e.target.value }))
+      }
+      className="border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+    >
+      <option value="">All Categories</option>
+      {Array.from(new Set(data?.map((p) => p.category))).map((cat) => (
+        <option key={cat} value={cat}>
+          {cat}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Price Range */}
+  <div className="flex gap-3 items-center">
+    <div className="flex flex-col">
+      <label htmlFor="priceMin" className="mb-1 text-sm font-medium text-gray-700">
+        Min Price
+      </label>
+      <input
+        id="priceMin"
+        type="number"
+        min={0}
+        placeholder="Min"
+        value={filters.priceMin}
+        onChange={(e) =>
+          setFilters((prev) => ({ ...prev, priceMin: e.target.value }))
+        }
+        className="border rounded-md px-3 py-2 w-20 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
-      <div className="flex flex-wrap gap-4 mb-4">
-        {/* Platform */}
-        <select
-          value={filters.platform}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, platform: e.target.value }))
-          }
-        >
-          <option value="">All Platforms</option>
-          {platforms.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+    </div>
 
-        {/* Category */}
-        <select
-          value={filters.category}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, category: e.target.value }))
-          }
-        >
-          <option value="">All Categories</option>
-          {Array.from(new Set(data?.map((p) => p.category))).map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
+    <div className="flex flex-col">
+      <label htmlFor="priceMax" className="mb-1 text-sm font-medium text-gray-700">
+        Max Price
+      </label>
+      <input
+        id="priceMax"
+        type="number"
+        min={0}
+        placeholder="Max"
+        value={filters.priceMax}
+        onChange={(e) =>
+          setFilters((prev) => ({ ...prev, priceMax: e.target.value }))
+        }
+        className="border rounded-md px-3 py-2 w-20 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      />
+    </div>
+  </div>
 
-        {/* Price Range */}
-        <input
-          type="number"
-          placeholder="Min Price"
-          value={filters.priceMin}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, priceMin: e.target.value }))
-          }
-        />
-        <input
-          type="number"
-          placeholder="Max Price"
-          value={filters.priceMax}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, priceMax: e.target.value }))
-          }
-        />
+  {/* Stock */}
+  <div className="flex flex-col min-w-[120px]">
+    <label htmlFor="stockMin" className="mb-1 text-sm font-medium text-gray-700">
+      Min Stock
+    </label>
+    <input
+      id="stockMin"
+      type="number"
+      min={0}
+      placeholder="Stock"
+      value={filters.stockMin}
+      onChange={(e) =>
+        setFilters((prev) => ({ ...prev, stockMin: e.target.value }))
+      }
+      className="border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+    />
+  </div>
 
-        {/* Stock */}
-        <input
-          type="number"
-          placeholder="Min Stock"
-          value={filters.stock}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, stockMin: e.target.value }))
-          }
-        />
-        <div className="space-y-2">
-          <Label htmlFor="sortByDate">Sort by Date</Label>
-          <Select
-            value={filters.sortByDate}
-            onValueChange={(value) =>
-              setFilters({ ...filters, sortByDate: value })
-            }
-          >
-            <SelectTrigger id="sortByDate">
-              <SelectValue placeholder="Sort by date" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+  {/* Sort by Date */}
+  <div className="flex flex-col min-w-[140px]">
+    <label htmlFor="sortByDate" className="mb-1 text-sm font-medium text-gray-700">
+      Sort by Date
+    </label>
+    <Select
+      value={filters.sortByDate}
+      onValueChange={(value) =>
+        setFilters({ ...filters, sortByDate: value })
+      }
+    >
+      <SelectTrigger id="sortByDate" className="w-full">
+        <SelectValue placeholder="Newest" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="newest">Newest</SelectItem>
+        <SelectItem value="oldest">Oldest</SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+</div>
+
       <p className="text-sm text-muted-foreground mb-2">
         Showing <strong>{filteredProducts.length}</strong> of{" "}
         {data?.length ?? 0} product{(data?.length ?? 0) !== 1 ? "s" : ""}
       </p>
-
-      <Card className="glass-card">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>All Pending Products</CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search products..."
-                className="pl-8 md:w-[240px] lg:w-[320px]"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-60">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
+<Card className="glass-card">
+  <CardHeader className="pb-3">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <CardTitle>All Pending Products</CardTitle>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search products..."
+          className="pl-8 md:w-[240px] lg:w-[320px]"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    {isLoading ? (
+      <div className="flex items-center justify-center h-60">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    ) : (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Status</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Format</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead>On homepage</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredProducts.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-10">
+                No digital products found
+              </TableCell>
+            </TableRow>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Format</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>On homepage</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10">
-                      No digital products found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredProducts.map((product: Product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">
-                        {product.status === "pending" ? (
-                          <span className="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">
-                            Pending
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
-                            Approved
-                          </span>
-                        )}
-                      </TableCell>
+            filteredProducts.map((product: Product) => (
+              <TableRow
+                key={product.id}
+                className={
+                  product.seen === null
+                    ? "bg-blue-50 border-l-4 border-blue-600"
+                    : ""
+                }
+              >
+                <TableCell className="font-medium">
+                  {product.status === "pending" ? (
+                    <span className="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">
+                      Pending
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
+                      Approved
+                    </span>
+                  )}
+                </TableCell>
 
-                      <TableCell className="font-medium">
-                        <img
-                          src={getPlatformImage(product.platform_name)}
-                          alt=""
-                          className="inline-block h-8 w-8 mr-2"
-                        />
-                        {/* {product.platform_name} */}
-                      </TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>
-                        ${parseFloat(product.price.toString()).toFixed(2)}
-                      </TableCell>
-                      <TableCell>{product.data_format}</TableCell>
-                      <TableCell>{product.stock_quantity || "N/A"}</TableCell>
-                      <TableCell>
-                        {product.on_homepage === "true" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            True
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            False
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(product)}
-                        >
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">View</span>
-                        </Button>
+                <TableCell className="font-medium flex items-center">
+                  <img
+                    src={getPlatformImage(product.platform_name)}
+                    alt=""
+                    className="inline-block h-8 w-8 mr-2"
+                  />
+                </TableCell>
 
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteProduct(product.id!)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                <TableCell>{product.category}</TableCell>
+                <TableCell>
+                  ${parseFloat(product.price.toString()).toFixed(2)}
+                </TableCell>
+
+                <TableCell>
+                  <span className="truncate max-w-[80px] block text-xs text-gray-800">
+                    {product.data_format.length > 10
+                      ? `${product.data_format.slice(0, 10)}...`
+                      : product.data_format}
+                  </span>
+                </TableCell>
+
+                <TableCell>{product.stock_quantity || "N/A"}</TableCell>
+
+                <TableCell>
+                  {product.on_homepage === "true" ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      True
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      False
+                    </span>
+                  )}
+                </TableCell>
+
+                <TableCell className="text-right space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleOpenDialog(product)}
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span className="sr-only">View</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteProduct(product.id!)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
           )}
-        </CardContent>
-      </Card>
+        </TableBody>
+      </Table>
+    )}
+  </CardContent>
+</Card>
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -704,50 +772,63 @@ const PendingDigitalProduct = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="files">
-              <div className="space-y-2 mt-4">
-                {files.length > 0 ? (
-                  files.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center"
-                    >
-                      <p className="truncate">{file.name}</p>
-                      <a
-                        href={file.content}
-                        download={file.name}
-                        className="text-blue-600 underline text-sm"
-                      >
-                        Download
-                      </a>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No files available.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
+           <TabsContent value="files">
+  <div className="relative p-2 min-h-[200px]">
+    {loading && (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )}
 
-            <TabsContent value="images">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                {images.length > 0 ? (
-                  images.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`Product Image ${index + 1}`}
-                      className="rounded border shadow object-cover w-full h-auto"
-                    />
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No images found.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
+    {!loading && files.length === 0 ? (
+      <p className="text-sm text-muted-foreground mt-4">No files available.</p>
+    ) : (
+      <div className="space-y-2 mt-4">
+        {files.map((file, index) => (
+          <div
+            key={index}
+            className="flex justify-between items-center"
+          >
+            <p className="truncate">{file.name}</p>
+            <a
+              href={file.content}
+              download={file.name}
+              className="text-blue-600 underline text-sm"
+            >
+              Download
+            </a>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</TabsContent>
+
+<TabsContent value="images">
+  <div className="relative p-2 min-h-[200px]">
+    {loading && (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )}
+
+    {!loading && images.length === 0 ? (
+      <p className="text-sm text-muted-foreground mt-4">No images found.</p>
+    ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        {images.map((image, index) => (
+          <img
+            key={index}
+            src={image}
+            alt={`Product Image ${index + 1}`}
+            className="rounded border shadow object-cover w-full h-auto"
+          />
+        ))}
+      </div>
+    )}
+  </div>
+</TabsContent>
+
           </Tabs>
           {/* Approve Button */}
           {selectedProduct && (
@@ -767,6 +848,9 @@ const PendingDigitalProduct = () => {
                   if (!res.ok) throw new Error("Failed to approve product");
 
                   alert("Product approved!");
+                  setTimeout(() => {
+                    window.location.reload()
+                  }, 200);
                   setIsDialogOpen(false); // optionally close dialog
                 } catch (err) {
                   alert("Error approving product");
