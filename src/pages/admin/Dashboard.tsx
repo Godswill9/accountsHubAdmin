@@ -164,7 +164,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        {/* <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Growth</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -177,7 +177,7 @@ const Dashboard = () => {
               Compared to first month
             </p>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
