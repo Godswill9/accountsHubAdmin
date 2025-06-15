@@ -87,7 +87,7 @@ files?: string[];
 export const DIGITAL_PRODUCTS_ENDPOINTS = {
   FEATURED: `${API_BASE_URL}/featured-products`,
   ALL: `${API_BASE_URL}/digital-products`,
-  DETAILS: (id: string) => `${API_BASE_URL}/digital-products/${id}`,
+  DETAILS: (id: string) => `${API_BASE_URL}/digital-products-FS/${id}`,
   DOWNLOAD: `${API_BASE_URL}/download-digital-products`,
 };
 
