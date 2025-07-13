@@ -164,20 +164,8 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Growth</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : `${salesGrowth}%`}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Compared to first month
-            </p>
-          </CardContent>
-        </Card> */}
+        {/* total money on site (add all wallets for both sellers and buyers)
+        sum of admin withdrawable money  (net sales) */}
       </div>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">

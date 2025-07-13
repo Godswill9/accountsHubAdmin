@@ -100,9 +100,9 @@ export const getAllPayments = async (): Promise<{ payments: any[] }> => {
     throw error;
   }
 };
-export const deletePayment = async (userId: string): Promise<{ payments: any[] }> => {
+export const deletePayment = async (paymentId: string): Promise<{ payments: any[] }> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/payments/${userId}`);
+    const response = await axios.delete(`${API_BASE_URL}/payments/${paymentId}`);
     return response.data
   } catch (error) {
     console.error('Error deleting payments:', error);

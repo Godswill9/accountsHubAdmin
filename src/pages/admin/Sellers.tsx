@@ -26,6 +26,7 @@ interface Seller {
   preferred_language?: string;
   acc_status: string;
   wallet_balance: Number;
+  seen: string
 }
 
 const Sellers = () => {

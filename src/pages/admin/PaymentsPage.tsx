@@ -38,6 +38,7 @@ interface Payment {
   payment_type: string;
   transaction_type: string;
   user_id: string;
+  seen_by_admin:string;
 }
 
 const PaymentsPage = () => {
@@ -128,13 +129,13 @@ const PaymentsPage = () => {
     setIsPaymentDetailOpen(true);
   };
 
-  const handleDeletePayment = (userId: string) => {
+  const handleDeletePayment = (paymentId: string) => {
     if (
       window.confirm(
         "Are you sure you want to delete this payment? This action cannot be undone."
       )
     ) {
-      deletePaymentMutation.mutate(userId);
+      deletePaymentMutation.mutate(paymentId);
     }
   };
 
@@ -283,7 +284,7 @@ const PaymentsPage = () => {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => handleDeletePayment(payment.user_id)}
+        onClick={() => handleDeletePayment(payment.payment_id)}
       >
         <Trash2 className="h-4 w-4" />
         <span className="sr-only">Delete</span>

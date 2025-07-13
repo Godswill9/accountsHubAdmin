@@ -60,6 +60,7 @@ export interface Product {
   date_created?: string;
   homepage_position?: string;
   status: string;
+    seen?:string
 }
 
 interface Seller {
@@ -477,23 +478,24 @@ const fetchImages = async (arr) => {
     </div>
   </div>
 
-  {/* Stock */}
-  <div className="flex flex-col min-w-[120px]">
-    <label htmlFor="stockMin" className="mb-1 text-sm font-medium text-gray-700">
-      Min Stock
-    </label>
-    <input
-      id="stockMin"
-      type="number"
-      min={0}
-      placeholder="Stock"
-      value={filters.stockMin}
-      onChange={(e) =>
-        setFilters((prev) => ({ ...prev, stockMin: e.target.value }))
-      }
-      className="border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-    />
-  </div>
+ {/* Stock */}
+<div className="flex flex-col min-w-[120px]">
+  <label htmlFor="stockMin" className="mb-1 text-sm font-medium text-gray-700">
+    Min Stock
+  </label>
+  <input
+    id="stockMin"
+    type="number"
+    min={0}
+    placeholder="Stock"
+    value={filters.stock || ""}
+    onChange={(e) => {
+      setFilters((prev) => ({ ...prev, stock: e.target.value }));
+    }}
+    className="border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+  />
+</div>
+
 
   {/* Sort by Date */}
   <div className="flex flex-col min-w-[140px]">
@@ -659,7 +661,7 @@ const fetchImages = async (arr) => {
           <Tabs defaultValue="details" className="w-full mt-4">
             <TabsList className="flex flex-wrap gap-2 justify-start">
               <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="files">Files</TabsTrigger>
+              {/* <TabsTrigger value="files">Files</TabsTrigger> */}
               <TabsTrigger value="images">Images</TabsTrigger>
             </TabsList>
 

@@ -75,6 +75,7 @@ export interface Product {
   seller_id?: string;
   homepage_position?: string;
   images?: string[]; // Array of image URLs
+    seen?:string
 }
 
 export interface DigitalProduct {
@@ -698,9 +699,9 @@ const fetchImages = async (arr) => {
       type="number"
       min={0}
       placeholder="Stock"
-      value={filters.stockMin}
+      value={filters.stock}
       onChange={(e) =>
-        setFilters((prev) => ({ ...prev, stockMin: e.target.value }))
+        setFilters((prev) => ({ ...prev, stock: e.target.value }))
       }
       className="border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
     />
@@ -1083,7 +1084,7 @@ const fetchImages = async (arr) => {
           <Tabs defaultValue="details" className="w-full mt-4">
             <TabsList className="flex flex-wrap gap-2 justify-start">
               <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="files">Files</TabsTrigger>
+              {/* <TabsTrigger value="files">Files</TabsTrigger> */}
               <TabsTrigger value="images">Images</TabsTrigger>
             </TabsList>
 
