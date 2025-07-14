@@ -37,6 +37,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { getMessagesByTicketId } from "@/services/messagesService";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface SidebarLinkProps {
   href: string;
@@ -104,7 +107,22 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
   const [orders, setOrders] = useState([])
   const [data, setData] = useState([])
   const [allData, setallData] = useState([])
+    const [allTickets, setTickets]=useState([])
+      const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+const totalUnreadConversations = Object.keys(unreadCounts).length;
   // Your existing fetch functions (do NOT remove or modify):
+
+  
+  useEffect(()=>{
+fetchPayments();
+  fetchOrders();
+  fetchData();
+  fetchSellers();
+  fetchUsers();
+fetchTickets()
+  },[])
+
+
 
   const fetchUsers = async () => {
   try {
@@ -114,6 +132,20 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
     setUsers(unSeenUsers);
   } catch (error) {
     console.error("Error fetching users:", error);
+  } finally {
+    // setIsLoading(false);
+  }
+};
+
+
+const fetchTickets = async () => {
+  try {
+    const response = await getTickets();
+    setTickets(response.tickets)
+    // console.log(unSeenTickets);
+    // setTickets(unSeenTickets);
+  } catch (error) {
+    console.error("Error fetching Tickets:", error);
   } finally {
     // setIsLoading(false);
   }
@@ -143,7 +175,7 @@ const fetchData = async () => {
       .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
    
       const filteredProducts2 = fetchedProducts
-      .filter(product => product.status !== "pending" && product.seen === null)
+      .filter(product => product.status !== "pending" && product.seen_by_admin === null)
       .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
 
     setData(filteredProducts);
@@ -155,6 +187,35 @@ const fetchData = async () => {
     // setIsLoading(false);
   }
 };
+
+  // Fetch messages for all tickets (log only for now)
+useEffect(() => {
+  const fetchUnreadCounts = async () => {
+    const counts: Record<string, number> = {};
+
+    for (const ticket of allTickets) {
+      try {
+        const messages = await getMessagesByTicketId(ticket.ticket_id);
+        const unseen = messages.result.filter(
+          (msg) => msg.seen_by_admin === 0
+        ).length;
+
+        if (unseen > 0) {
+          counts[ticket.ticket_id] = unseen;
+        }
+      } catch (err) {
+        console.error("Error fetching messages for ticket", ticket.ticket_id, err);
+      }
+    }
+    // const totalUnreadConversations = Object.keys(counts).length;
+    // console.log(totalUnreadConversations)
+    setUnreadCounts(counts);
+  };
+
+  if (allTickets.length > 0) {
+    fetchUnreadCounts();
+  }
+}, [allTickets]);
 
 
 
@@ -214,16 +275,6 @@ const fetchOrders = async () => {
     console.error("Error fetching dashboard data:", error);
   }
 };
-
-
-  useEffect(()=>{
-fetchPayments();
-  fetchOrders();
-  fetchData();
-  fetchSellers();
-  fetchUsers();
-
-  },[])
 
   const handleLogout = async () => {
     await logout();
@@ -323,6 +374,7 @@ fetchPayments();
               href="/admin/dashboard/tickets"
               icon={MessageSquare}
               label="Support Tickets"
+               count={totalUnreadConversations}
               onClick={onClose}
             />
             <SidebarLink

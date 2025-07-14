@@ -44,7 +44,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     const ext = url.split(".").pop()?.toLowerCase();
     return ["jpg", "jpeg", "png", "gif", "webp"].includes(ext || "");
   };
-
   return (
     <div
       className={cn(

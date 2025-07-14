@@ -45,6 +45,7 @@ interface Message {
   seen: boolean;
   time_received: string;
   attachments?: string[];
+  seen_by_admin:number;
 }
 
 const TicketDetail = () => {
@@ -58,6 +59,8 @@ const TicketDetail = () => {
   const navigate = useNavigate();
   const { admin } = useAuth();
   const [fetchedImage, setFetchedImage] = useState<Record<string, string>>({});
+const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
 
   const queryClient = useQueryClient();
 
@@ -176,7 +179,7 @@ const TicketDetail = () => {
   useEffect(() => {
     if (messagesData?.result) {
       messagesData.result.forEach((message: Message) => {
-        if (!message.seen && message.sender_id !== admin?.admin_id) {
+        if (message.seen_by_admin === 0 && message.sender_id !== admin?.admin_id && ticketData.ticket.admin_id !== null) {
           markSeenMutation.mutate(message.id);
         }
       });
@@ -342,103 +345,115 @@ const TicketDetail = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 flex-1">
-        <div className="md:col-span-3 flex flex-col">
+     <div className="flex flex-col md:flex-row gap-6 flex-1">
+       <div className="flex-1 md:w-3/4 flex flex-col">
           <Card className="glass-card flex-1 flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle>Conversation</CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
-              {isMessagesLoading ? (
-                <div className="flex items-center justify-center h-60">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p>No messages yet</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages
-                    .slice()
-                    .sort(
-                      (a: Message, b: Message) =>
-                        new Date(a.time_received).getTime() -
-                        new Date(b.time_received).getTime()
-                    )
-                    .map((message: Message) => {
-                      const isAdmin = message.sender_id === "admin";
-                      return (
-                        <div
-                          key={message.id}
-                          className={`flex ${
-                            isAdmin ? "justify-end" : "justify-start"
-                          }`}
-                        >
-                          <div
-                            className={`flex ${
-                              isAdmin ? "flex-row-reverse" : "flex-row"
-                            } items-start gap-2 max-w-[80%]`}
+<CardContent className="flex-1 px-2">
+  {isMessagesLoading ? (
+    <div className="flex items-center justify-center h-60">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  ) : messages.length === 0 ? (
+    <div className="text-center py-8 text-muted-foreground">
+      <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
+      <p>No messages yet</p>
+    </div>
+  ) : (
+   <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      {messages
+        .slice()
+        .sort(
+          (a: Message, b: Message) =>
+            new Date(a.time_received).getTime() -
+            new Date(b.time_received).getTime()
+        )
+        .map((message: Message) => {
+          const isAdmin = message.sender_id === "admin";
+          return (
+            <div
+              key={message.id}
+              className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`flex ${
+                  isAdmin ? "flex-row-reverse" : "flex-row"
+                } items-start gap-2 w-full`}
+              >
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarFallback>{isAdmin ? "A" : "U"}</AvatarFallback>
+                </Avatar>
+                <div className="max-w-full">
+                  <div
+                    className={`px-4 py-2 rounded-lg break-words max-w-[90%] sm:max-w-[80%] ${
+                      isAdmin
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    }`}
+                  >
+                    {message.message.startsWith("get-image") ? (
+                      <img
+                        src={fetchedImage[message.id] || ""}
+                        alt="Image"
+                        className="max-w-full h-auto rounded cursor-pointer"
+                        onClick={() => setSelectedImage(fetchedImage[message.id])}
+                      />
+                    ) : message.messageType === "file" ? (
+                      <div className="space-y-1">
+                        {message.message.split(", ").map((url, index) => (
+                          <a
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center text-sm underline break-all"
                           >
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback>
-                                {isAdmin ? "A" : "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div
-                                className={`px-4 py-2 rounded-lg ${
-                                  isAdmin
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted"
-                                }`}
-                              >
-                                {message.message.startsWith("get-image") ? (
-                                  <img
-                                    src={fetchedImage[message.id] || ""}
-                                    alt="Loading..."
-                                    className="max-w-full h-auto"
-                                  />
-                                ) : message.messageType === "file" ? (
-                                  <div className="space-y-1">
-                                    {message.message
-                                      .split(", ")
-                                      .map((url, index) => (
-                                        <a
-                                          key={index}
-                                          href={url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="flex items-center text-sm underline"
-                                        >
-                                          {getFileIcon(url)}
-                                          <span className="ml-1">
-                                            Attachment {index + 1}
-                                          </span>
-                                        </a>
-                                      ))}
-                                  </div>
-                                ) : (
-                                  <p>{message.message}</p>
-                                )}
-                              </div>
-                              <p
-                                className={`text-xs mt-1 text-muted-foreground ${
-                                  isAdmin ? "text-right" : "text-left"
-                                }`}
-                              >
-                                {formatTimestamp(message.time_received)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  <div ref={messagesEndRef} />
+                            {getFileIcon(url)}
+                            <span className="ml-1">Attachment {index + 1}</span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap">{message.message}</p>
+                    )}
+                  </div>
+                  <p
+                    className={`text-xs mt-1 text-muted-foreground ${
+                      isAdmin ? "text-right" : "text-left"
+                    }`}
+                  >
+                    {formatTimestamp(message.time_received)}
+                  </p>
                 </div>
-              )}
-            </CardContent>
+              </div>
+            </div>
+          );
+        })}
+      <div ref={messagesEndRef} />
+    </div>
+  )}
+{selectedImage && (
+  <div
+    className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center"
+    onClick={() => setSelectedImage(null)}
+  >
+    <div
+      className="bg-transparent max-w-[90vw] max-h-[80vh] p-2 rounded-lg flex items-center justify-center"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <img
+        src={selectedImage}
+        alt="Preview"
+        className="max-w-full max-h-full object-contain rounded shadow-lg"
+      />
+    </div>
+  </div>
+)}
+
+</CardContent>
+
             <CardFooter className="border-t p-4">
               <form onSubmit={handleSendMessage} className="w-full">
                 <div className="flex flex-col space-y-2 w-full">
@@ -530,7 +545,7 @@ const TicketDetail = () => {
           </Card>
         </div>
 
-        <div className="md:col-span-1">
+       <div className="md:w-1/4">
           <Card className="glass-card">
             <CardHeader className="pb-3">
               <CardTitle>Ticket Details</CardTitle>

@@ -44,6 +44,7 @@ interface Order {
   updatedAt?: string;
   item_name?: string;
   seller_id?: string;
+  seen_by_admin?:string;
 }
 
 const statusOptions = [
@@ -206,7 +207,7 @@ const OrdersPage = () => {
             <TableHead>Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Amount</TableHead>
-            <TableHead>Seen</TableHead>
+            {/* <TableHead>Seen</TableHead> */}
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -260,7 +261,7 @@ const OrdersPage = () => {
 
                 <TableCell>${Number(order.amount).toFixed(2)}</TableCell>
 
-                <TableCell>
+                {/* <TableCell>
                   {order.seen_by_admin === null ? (
                     <span className="inline-block px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
                       New
@@ -270,7 +271,7 @@ const OrdersPage = () => {
                       Seen
                     </span>
                   )}
-                </TableCell>
+                </TableCell> */}
 
                 <TableCell className="text-right space-x-2">
                   <Button

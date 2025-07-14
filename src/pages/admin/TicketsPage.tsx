@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getTickets,
@@ -36,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { getMessagesByTicketId } from "@/services/messagesService";
 
 interface Ticket {
   admin_id: string;
@@ -58,6 +59,12 @@ const TicketsPage = () => {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const navigate = useNavigate();
   const { admin } = useAuth();
+  const [allTickets, setTickets]=useState([])
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+const totalUnread = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+const totalUnreadConversations = Object.keys(unreadCounts).length;
+
+
 
   const queryClient = useQueryClient();
 
@@ -65,6 +72,43 @@ const TicketsPage = () => {
     queryKey: ["tickets"],
     queryFn: getTickets,
   });
+
+  
+  // Set tickets when data arrives
+  useEffect(() => {
+    if (data?.tickets) {
+      setTickets(data.tickets);
+    }
+  }, [data]);
+
+  // Fetch messages for all tickets (log only for now)
+useEffect(() => {
+  const fetchUnreadCounts = async () => {
+    const counts: Record<string, number> = {};
+
+    for (const ticket of allTickets) {
+      try {
+        const messages = await getMessagesByTicketId(ticket.ticket_id);
+        const unseen = messages.result.filter(
+          (msg) => msg.seen_by_admin === 0
+        ).length;
+
+        if (unseen > 0) {
+          counts[ticket.ticket_id] = unseen;
+        }
+      } catch (err) {
+        console.error("Error fetching messages for ticket", ticket.ticket_id, err);
+      }
+    }
+    setUnreadCounts(counts);
+  };
+
+  if (allTickets.length > 0) {
+    fetchUnreadCounts();
+  }
+}, [allTickets]);
+
+
 
   const assignTicketMutation = useMutation({
     mutationFn: (ticketId: string) =>
@@ -170,7 +214,20 @@ const TicketsPage = () => {
       <Card className="glass-card">
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>All Tickets</CardTitle>
+      <div className="relative inline-flex items-center flex-wrap gap-2">
+  <CardTitle>All Tickets</CardTitle>
+  {totalUnreadConversations > 0 && (
+    <span className="ml-1 bg-red-500 text-white text-xs font-semibold h-5 px-2 rounded-full flex items-center justify-center whitespace-nowrap">
+      <span className="block sm:hidden">{totalUnreadConversations}</span>
+      <span className="hidden sm:block">
+        {totalUnreadConversations} unread conversations
+      </span>
+    </span>
+  )}
+</div>
+
+
+
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -228,14 +285,21 @@ const TicketsPage = () => {
                       </TableCell>
                       <TableCell>{ticket.admin_id || "Unassigned"}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewTicket(ticket.ticket_id)}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          <span className="sr-only">View</span>
-                        </Button>
+                       <Button
+  variant="ghost"
+  size="icon"
+  onClick={() => handleViewTicket(ticket.ticket_id)}
+  className="relative"
+>
+  <MessageSquare className="h-4 w-4" />
+ {unreadCounts[ticket.ticket_id] > 0 && (
+  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-semibold min-w-[16px] h-[16px] px-[4px] rounded-full flex items-center justify-center">
+    {unreadCounts[ticket.ticket_id]}
+  </span>
+)}
+  <span className="sr-only">View</span>
+</Button>
+
                         <Button
                           variant="ghost"
                           size="icon"

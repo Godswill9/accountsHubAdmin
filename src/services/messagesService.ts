@@ -38,7 +38,7 @@ export const getMessagesByTicketId = async (ticketId: string) => {
 export const markMessageSeenByAdmin = async (messageId: string) => {
   try {
     const response = await axios.put(`${API_BASE_URL}/edit-message-seen-by-admin`, {
-      message_id: messageId,
+      messageId: messageId,
     });
     return response.data;
   } catch (error) {

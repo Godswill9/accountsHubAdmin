@@ -11,8 +11,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Edit, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 import axios from "axios";
+import { UserCircle } from "lucide-react"
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -23,12 +41,18 @@ interface User {
   verified: string;
   acc_status: string;
   wallet_balance: Number;
+  seen?:string;
+  profilePhoto?:string;
 }
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [UserStatus, setUserStatus] = useState("");
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isViewMode, setIsViewMode] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -49,7 +73,45 @@ const UsersPage = () => {
 
     fetchUsers();
   }, []);
-  console.log(users);
+
+
+  const handleUserAction= (action)=>{
+    console.log(action)
+  }
+
+
+  
+    const handleBanUser = async (userId) => {
+    try {
+      await axios.put(`https://aitool.asoroautomotive.com/api/users/${userId}/account-status`, {
+        acc_status: "Banned",
+      });
+      toast.success("User banned successfully");
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to ban User.");
+    }
+  };
+    const revokeBanUser = async (userId) => {
+    try {
+      await axios.put(`https://aitool.asoroautomotive.com/api/users/${userId}/account-status`, {
+        acc_status: "Okay",
+      });
+      toast.success("User unbanned successfully");
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to unban User.");
+    }
+  };
+
+   const handleOpenDialog = (user:User, viewMode = false) => {
+    setSelectedUser(user);
+    setUserStatus(user.acc_status);
+    setIsViewMode(viewMode);
+    setIsDialogOpen(true);
+  };
+
+  // console.log(users);
   const filteredUsers = users.filter((user) =>
     // user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -149,11 +211,21 @@ const UsersPage = () => {
                   )}
                 </TableCell>
                  <TableCell>{user.id}</TableCell>
-                <TableCell className="text-right space-x-2">
+                {/* <TableCell className="text-right space-x-2">
                   <Button variant="ghost" size="icon">
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only">Delete</span>
                   </Button>
+                </TableCell> */}
+                  <TableCell className="text-right space-x-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleOpenDialog(user, true)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      <span className="sr-only">View</span>
+                                    </Button>
                 </TableCell>
               </TableRow>
             ))
@@ -163,6 +235,124 @@ const UsersPage = () => {
     )}
   </CardContent>
 </Card>
+   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+  <DialogContent className="w-[90%] h-[80%] max-w-md mx-auto rounded-lg overflow-y-auto">
+    <DialogHeader>
+        {selectedUser?.profilePhoto ? (
+    <img
+      src={selectedUser.profilePhoto}
+      alt="User"
+      className="h-20 w-20 rounded-full object-cover mb-2"
+    />
+  ) : (
+    <UserCircle className="h-20 w-20 text-gray-400 mb-2" />
+  )}
+      <DialogTitle>
+        {isViewMode ? "User Details" : "Update User Status"}
+      </DialogTitle>
+      <DialogDescription>
+        {isViewMode
+          ? "View this user's details"
+          : "Change the status of this user"}
+      </DialogDescription>
+    </DialogHeader>
+
+    {selectedUser && (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm text-muted-foreground">Full Name</Label>
+            <p className="font-medium">{selectedUser.fullName}</p>
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">Username</Label>
+            <p className="font-medium">{selectedUser.username}</p>
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">Email</Label>
+           <p className="font-medium break-words whitespace-normal text-sm leading-relaxed">
+  {selectedUser.email}
+</p>
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">User ID</Label>
+          <p className="font-medium break-words whitespace-normal text-sm leading-relaxed">
+  {selectedUser.id}
+</p>
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">Created At</Label>
+            <p className="font-medium">
+              {new Date(selectedUser.created_at).toLocaleDateString()}
+            </p>
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">Wallet Balance</Label>
+            <p className="font-medium">
+              ${Number(selectedUser.wallet_balance).toFixed(2)}
+            </p>
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">Verified</Label>
+            <p className="font-medium capitalize">
+              {selectedUser.verified || "No"}
+            </p>
+          </div>
+        </div>
+
+        {isViewMode ? (
+          <div>
+            <Label className="text-sm text-muted-foreground">Status</Label>
+            <p className="font-medium capitalize">
+              {selectedUser.acc_status}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {/* <Label htmlFor="status">Account Status</Label>
+            <Select value={UserStatus} onValueChange={setUserStatus}>
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select> */}
+          </div>
+        )}
+      </div>
+    )}
+  {/* <Button variant="destructive" onClick={() => handleUserAction("suspend")}>
+    Suspend User
+  </Button> */}
+
+  {selectedUser && (
+   <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 mt-4">
+    {selectedUser.acc_status === "Banned" ? (
+      <Button
+        variant="default"
+        onClick={() => revokeBanUser(selectedUser.id)}
+      >
+        Unban User
+      </Button>
+    ) : (
+      <Button
+        variant="destructive"
+        onClick={() => handleBanUser(selectedUser.id)}
+      >
+        Ban User
+      </Button>
+    )}
+</DialogFooter>
+)}
+
+  </DialogContent>
+</Dialog>
+
 
     </div>
   );

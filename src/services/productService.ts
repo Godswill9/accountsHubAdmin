@@ -82,6 +82,7 @@ status: string;
 images?: string[];
 homepage_position?: string;
 files?: string[];
+seen_by_admin:string
 }
 
 export const DIGITAL_PRODUCTS_ENDPOINTS = {
