@@ -754,7 +754,9 @@ const fetchImages = async (arr) => {
                     <Label className="text-sm text-muted-foreground">
                       Description
                     </Label>
-                    <p className="font-medium">{selectedProduct.description}</p>
+                    <p className="font-medium"
+                      dangerouslySetInnerHTML={{ __html: selectedProduct.description }}
+                    ></p>
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">

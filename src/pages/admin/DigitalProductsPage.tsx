@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Add this to your global CSS
 import {
   Table,
   TableBody,
@@ -172,7 +174,7 @@ const DigitalProductsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTextFiles, setSelectedTextFiles] = useState<File[]>([]);
   const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
-  const [files, setFiles] = useState<any[]>([]);
+  // const [files, setFiles] = useState<any[]>([]);
   const [seller, setSeller] = useState<Seller | null>(null);
   const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -211,6 +213,14 @@ const DigitalProductsPage = () => {
     return Array.from(platformSet);
   }, [data]);
 
+  const handleQuillChange = (value: string) => {
+  setCurrentProduct((prev) => ({
+    ...prev,
+    description: value,
+  }));
+};
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -235,47 +245,47 @@ const DigitalProductsPage = () => {
 
   useEffect(() => {
     if (currentProduct?.id) {
-      fetchFiles(currentProduct.id);
+      // fetchFiles(currentProduct.id);
       // fetchImages(currentProduct.id);
     }
   }, [currentProduct]);
 
- const fetchFiles = async (arr) => {
-  setLoading(true);
-  try {
-    const filePromises = arr.map(async (item) => {
-      const response = await fetch(
-        `https://aitool.asoroautomotive.com/api/digital-product-file/${item.id}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+//  const fetchFiles = async (arr) => {
+//   setLoading(true);
+//   try {
+//     const filePromises = arr.map(async (item) => {
+//       const response = await fetch(
+//         `https://aitool.asoroautomotive.com/api/digital-product-file/${item.id}`,
+//         {
+//           method: "GET",
+//           credentials: "include",
+//         }
+//       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! Status: ${response.status}`);
+//       }
 
-      const blob = await response.blob();
-      const content = await blob.text();
+//       const blob = await response.blob();
+//       const content = await blob.text();
 
-      return {
-        id: item.id,
-        name: item.file_path,
-        type: item.file_type,
-        content,
-      };
-    });
+//       return {
+//         id: item.id,
+//         name: item.file_path,
+//         type: item.file_type,
+//         content,
+//       };
+//     });
 
-    const result = await Promise.all(filePromises); // wait for all files to finish
-    setLoading(false);
-    return result;
-  } catch (error) {
-    setLoading(false);
-    console.error("Error fetching files:", error);
-    return [];
-  }
-};
+//     const result = await Promise.all(filePromises); // wait for all files to finish
+//     setLoading(false);
+//     return result;
+//   } catch (error) {
+//     setLoading(false);
+//     console.error("Error fetching files:", error);
+//     return [];
+//   }
+// };
 
 const fetchImages = async (arr) => {
   setLoading(true);
@@ -327,11 +337,11 @@ const fetchImages = async (arr) => {
     const fetchedProduct = await products.fetchProductDetails(product.id);
     console.log(fetchedProduct);
     const imageBlobs = await fetchImages(fetchedProduct.images);
-    const fileBlobs = await fetchFiles(fetchedProduct.files);
+    // const fileBlobs = await fetchFiles(fetchedProduct.files);
     console.log(imageBlobs);
-    console.log(fileBlobs);
+    // console.log(fileBlobs);
     setImages(imageBlobs);
-    setFiles(fileBlobs);
+    // setFiles(fileBlobs);
   };
 
   const showSellerDetails = async (sellerId: string) => {
@@ -498,7 +508,7 @@ const fetchImages = async (arr) => {
     const { name, value } = e.target;
     setCurrentProduct({
       ...currentProduct,
-      [name]: name === "price" ? parseFloat(value) : value,
+      [name]: name === "price" || name === "stock_quantity"? parseFloat(value) : value,
     });
   };
 
@@ -552,15 +562,16 @@ const fetchImages = async (arr) => {
     formData.append("platform_name", currentProduct.platform_name || "");
     formData.append("category", currentProduct.category || "");
     formData.append("price", currentProduct.price.toString() || "0");
+    formData.append("stock_quantity", currentProduct.stock_quantity.toString() || "0");
     formData.append("description", currentProduct.description || "");
     formData.append("data_format", currentProduct.data_format || "");
     formData.append("important_notice", currentProduct.important_notice || "");
 
-    if (selectedTextFiles.length > 0) {
-      for (let i = 0; i < selectedTextFiles.length; i++) {
-        formData.append("text_files", selectedTextFiles[i]);
-      }
-    }
+    // if (selectedTextFiles.length > 0) {
+    //   for (let i = 0; i < selectedTextFiles.length; i++) {
+    //     formData.append("text_files", selectedTextFiles[i]);
+    //   }
+    // }
 
     if (selectedImageFiles.length > 0) {
       for (let i = 0; i < selectedImageFiles.length; i++) {
@@ -936,7 +947,21 @@ const fetchImages = async (arr) => {
                   required
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
+                <Label htmlFor="price">Quantity</Label>
+                <Input
+                  id="stock_quantity"
+                  name="stock_quantity"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={currentProduct.stock_quantity}
+                  onChange={handleInputChange}
+                  placeholder="Enter quantity"
+                  required
+                />
+              </div>
+              {/* <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -947,7 +972,18 @@ const fetchImages = async (arr) => {
                   rows={3}
                   required
                 />
-              </div>
+              </div> */}
+            <div className="space-y-2">
+  <Label htmlFor="description">Description</Label>
+  <ReactQuill
+    theme="snow"
+    value={currentProduct.description}
+    onChange={handleQuillChange}
+    placeholder="Enter product description"
+    className="min-h-[200px] bg-white"
+  />
+</div>
+
               <div className="space-y-2">
                 <Label htmlFor="data_format">Data Format</Label>
                 <Textarea
@@ -971,7 +1007,7 @@ const fetchImages = async (arr) => {
                   required
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
+              {/* <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="files">Upload Files</Label>
                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                   <div className="space-y-1 text-center">
@@ -1010,7 +1046,8 @@ const fetchImages = async (arr) => {
                     </ul>
                   </div>
                 )}
-              </div>
+              </div> */}
+
               <div>
                 <Label htmlFor="imageFiles">
                   Upload Account Images/Screenshots
@@ -1056,7 +1093,7 @@ const fetchImages = async (arr) => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stock_quantity">Stock quantity</Label>:
-                <span> {currentProduct.stock_quantity} items selected</span>
+                <span> {currentProduct.stock_quantity} accounts available</span>
               </div>
             </div>
             <DialogFooter>
@@ -1177,7 +1214,9 @@ const fetchImages = async (arr) => {
                     <Label className="text-sm text-muted-foreground">
                       Description
                     </Label>
-                    <p className="font-medium">{currentProduct.description}</p>
+                     <p className="font-medium"
+                      dangerouslySetInnerHTML={{ __html: currentProduct.description }}
+                    ></p>
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">
@@ -1205,7 +1244,7 @@ const fetchImages = async (arr) => {
       </div>
     )}
 
-    {files.length > 0 ? (
+    {/* {files.length > 0 ? (
       <div className="space-y-2 mt-4">
         {files.map((file, index) => (
           <div key={index} className="flex justify-between items-center">
@@ -1224,7 +1263,7 @@ const fetchImages = async (arr) => {
       !loading && (
         <p className="text-sm text-muted-foreground mt-4">No files available.</p>
       )
-    )}
+    )} */}
   </div>
 </TabsContent>
 
