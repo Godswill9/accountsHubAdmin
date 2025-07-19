@@ -608,10 +608,10 @@ const fetchImages = async (arr) => {
             Manage digital products and downloadable content
           </p>
         </div>
-        <Button onClick={() => handleOpenDialogDetails()}>
+        {/* <Button onClick={() => handleOpenDialogDetails()}>
           <Plus className="mr-2 h-4 w-4" />
           Add Digital Product
-        </Button>
+        </Button> */}
       </div>
       {/* <PlatformFilter
         platforms={platforms}
