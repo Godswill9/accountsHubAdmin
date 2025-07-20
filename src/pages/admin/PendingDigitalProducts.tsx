@@ -846,6 +846,7 @@ const fetchImages = async (arr) => {
                       headers: {
                         "Content-Type": "application/json",
                       },
+                      credentials: "include",
                     }
                   );
 
