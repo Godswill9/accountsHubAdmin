@@ -5,13 +5,6 @@
 export * from './authService';
 
 // Export digital products service functions
-export * from './digitalProductsService';
-
-// Export ticket service functions
-export * from './ticketService';
-
-// Export message service functions
-export * from './messageService';
 export * from './messagesService'; 
 
 // Export homepage service functions

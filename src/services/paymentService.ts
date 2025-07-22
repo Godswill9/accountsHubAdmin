@@ -43,7 +43,9 @@ export interface PaymentResponse {
 
 export const createCryptoPayment = async (paymentData: CryptoPaymentRequest): Promise<PaymentResponse> => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/payments/create-crypto-payment`, paymentData);
+    const response = await axios.post(`${API_BASE_URL}/payments/create-crypto-payment`, paymentData, {
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating crypto payment:', error);
@@ -53,7 +55,9 @@ export const createCryptoPayment = async (paymentData: CryptoPaymentRequest): Pr
 
 export const createCurrencyPayment = async (paymentData: CurrencyPaymentRequest): Promise<PaymentResponse> => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/payments/create-currency-payment`, paymentData);
+    const response = await axios.post(`${API_BASE_URL}/payments/create-currency-payment`, paymentData, {
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating currency payment:', error);
@@ -63,7 +67,9 @@ export const createCurrencyPayment = async (paymentData: CurrencyPaymentRequest)
 
 export const getPaymentStatus = async (paymentId: string): Promise<PaymentResponse> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/payments/payment/${paymentId}/status`);
+    const response = await axios.get(`${API_BASE_URL}/payments/payment/${paymentId}/status`,{
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error('Error getting payment status:', error);
@@ -73,7 +79,9 @@ export const getPaymentStatus = async (paymentId: string): Promise<PaymentRespon
 
 export const getUserPayments = async (userId: string): Promise<{ payments: any[] }> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/payments/${userId}/payments`);
+    const response = await axios.get(`${API_BASE_URL}/payments/${userId}/payments`,{
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error('Error getting user payments:', error);
@@ -83,7 +91,9 @@ export const getUserPayments = async (userId: string): Promise<{ payments: any[]
 
 export const savePaymentDetails = async (paymentData: PaymentSaveRequest): Promise<PaymentResponse> => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/payments`, paymentData);
+    const response = await axios.post(`${API_BASE_URL}/payments`, paymentData,{
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error('Error saving payment details:', error);
@@ -93,7 +103,9 @@ export const savePaymentDetails = async (paymentData: PaymentSaveRequest): Promi
 
 export const getAllPayments = async (): Promise<{ payments: any[] }> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/payments`);
+    const response = await axios.get(`${API_BASE_URL}/payments`,{
+      withCredentials: true
+    });
     return response.data
   } catch (error) {
     console.error('Error getting user payments:', error);
@@ -102,7 +114,9 @@ export const getAllPayments = async (): Promise<{ payments: any[] }> => {
 };
 export const deletePayment = async (paymentId: string): Promise<{ payments: any[] }> => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/payments/${paymentId}`);
+    const response = await axios.delete(`${API_BASE_URL}/payments/${paymentId}`,{
+      withCredentials: true
+    });
     return response.data
   } catch (error) {
     console.error('Error deleting payments:', error);

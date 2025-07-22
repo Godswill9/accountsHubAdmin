@@ -36,7 +36,9 @@ import axios from "axios";
 // Get all users
 export const getAllUsers = async (): Promise<any> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/users`);
+    const response = await axios.get(`${API_BASE_URL}/users`,{
+      withCredentials: true
+    });
     return response.data; // Assuming the response contains a `users` array
   } catch (error) {
     console.error("Error fetching all users:", error);
@@ -47,7 +49,9 @@ export const getAllUsers = async (): Promise<any> => {
 // Get user by ID
 export const getUserById = async (userId: string): Promise<any> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/users/${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/users/${userId}`,{
+      withCredentials: true
+    });
     return response.data; // Assuming the response contains the user object
   } catch (error) {
     console.error(`Error fetching user with ID ${userId}:`, error);
@@ -58,7 +62,9 @@ export const getUserById = async (userId: string): Promise<any> => {
 // Update user profile
 export const updateUser = async (userId: string, userData: any): Promise<any> => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/users/${userId}`, userData);
+    const response = await axios.put(`${API_BASE_URL}/users/${userId}`, userData,{
+      withCredentials: true
+    });
     return response.data; // Assuming the response contains the updated user object
   } catch (error) {
     console.error(`Error updating user with ID ${userId}:`, error);
@@ -69,7 +75,9 @@ export const updateUser = async (userId: string, userData: any): Promise<any> =>
 // Delete user account
 export const deleteUser = async (userId: string): Promise<any> => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/users/${userId}`);
+    const response = await axios.delete(`${API_BASE_URL}/users/${userId}`,{
+      withCredentials: true
+    });
     return response.data; // Assuming the response confirms the deletion
   } catch (error) {
     console.error(`Error deleting user with ID ${userId}:`, error);

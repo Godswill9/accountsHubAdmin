@@ -7,16 +7,22 @@ export const getFeaturedProducts = async () => {
 };
 
 export const postProductToHomepage = async (productData: any) => {
-  const response = await apiClient.post('/api/post-product-to-homepage', productData);
+  const response = await apiClient.post('/api/post-product-to-homepage', productData,{
+      withCredentials: true
+    });
   return response.data;
 };
 
 export const updateProductOnHomepage = async (id: string, productData: any) => {
-  const response = await apiClient.put('/api/update-product-on-homepage', { id, ...productData });
+  const response = await apiClient.put('/api/update-product-on-homepage', { id, ...productData },{
+      withCredentials: true
+    });
   return response.data;
 };
 
 export const removeProductFromHomepage = async (id: string) => {
-  const response = await apiClient.put(`/api/remove-product-from-homepage/${id}`);
+  const response = await apiClient.put(`/api/remove-product-from-homepage/${id}`,{
+      withCredentials: true
+    });
   return response.data;
 };

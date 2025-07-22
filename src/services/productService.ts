@@ -94,7 +94,9 @@ export const DIGITAL_PRODUCTS_ENDPOINTS = {
 
 export const fetchFeaturedProducts = async (): Promise<Product[]> => {
   try {
-    const response = await axios.get(DIGITAL_PRODUCTS_ENDPOINTS.FEATURED);
+    const response = await axios.get(DIGITAL_PRODUCTS_ENDPOINTS.FEATURED,{
+      withCredentials: true
+    });
     return response.data.featuredProducts || [];
   } catch (error) {
     console.error('Error fetching featured products:', error);
@@ -104,7 +106,9 @@ export const fetchFeaturedProducts = async (): Promise<Product[]> => {
 
 export const fetchAllProducts = async (): Promise<Product[]> => {
   try {
-    const response = await axios.get(DIGITAL_PRODUCTS_ENDPOINTS.ALL);
+    const response = await axios.get(DIGITAL_PRODUCTS_ENDPOINTS.ALL,{
+      withCredentials: true
+    });
     return response.data || [];
   } catch (error) {
     console.error('Error fetching all products:', error);
@@ -114,7 +118,9 @@ export const fetchAllProducts = async (): Promise<Product[]> => {
 
 export const fetchProductDetails = async (id: string): Promise<Product> => {
   try {
-    const response = await axios.get(DIGITAL_PRODUCTS_ENDPOINTS.DETAILS(id));
+    const response = await axios.get(DIGITAL_PRODUCTS_ENDPOINTS.DETAILS(id),{
+      withCredentials: true
+    });
     // console.log(response.data.product)
     return response.data.product
   } catch (error) {

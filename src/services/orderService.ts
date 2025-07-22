@@ -6,7 +6,9 @@ import { ORDER_ENDPOINTS } from '@/config/api';
 
 export const createOrder = async (orderData: any) => {
   try {
-    const response = await axios.post(ORDER_ENDPOINTS.CREATE, orderData);
+    const response = await axios.post(ORDER_ENDPOINTS.CREATE, orderData,{
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating order:', error);
@@ -16,7 +18,9 @@ export const createOrder = async (orderData: any) => {
 
 export const getOrder = async (orderId: string) => {
   try {
-    const response = await axios.get(ORDER_ENDPOINTS.GET(orderId));
+    const response = await axios.get(ORDER_ENDPOINTS.GET(orderId),{
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error(`Error fetching order ${orderId}:`, error);
@@ -26,7 +30,9 @@ export const getOrder = async (orderId: string) => {
 
 export const getOrders = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/orders`);
+    const response = await axios.get(`${API_BASE_URL}/orders`, {
+      withCredentials: true
+    });
     const orders = response.data
   console.log(orders)
     return orders.orders;
@@ -38,7 +44,9 @@ export const getOrders = async () => {
 
 export const updateOrder = async (orderData: any) => {
   try {
-    const response = await axios.put(ORDER_ENDPOINTS.UPDATE, orderData);
+    const response = await axios.put(ORDER_ENDPOINTS.UPDATE, orderData, {
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error('Error updating order:', error);
@@ -48,7 +56,9 @@ export const updateOrder = async (orderData: any) => {
 
 export const deleteOrder = async (orderId: string) => {
   try {
-    const response = await axios.delete(ORDER_ENDPOINTS.DELETE(orderId));
+    const response = await axios.delete(ORDER_ENDPOINTS.DELETE(orderId),{
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.error(`Error deleting order ${orderId}:`, error);

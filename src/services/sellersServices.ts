@@ -3,7 +3,9 @@ import axios from "axios";
 
 export const getAllSellers = async (): Promise<any> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/sellers`);
+    const response = await axios.get(`${API_BASE_URL}/sellers`,{
+      withCredentials: true
+    });
     return response.data.sellers; // Assuming the response contains a `sellers` array
   } catch (error) {
     console.error("Error fetching all sellers:", error);
@@ -14,7 +16,9 @@ export const getAllSellers = async (): Promise<any> => {
 // Get seller by ID
 export const getSellerById = async (seller_Id: string): Promise<any> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/sellers/${seller_Id}`);
+    const response = await axios.get(`${API_BASE_URL}/sellers/${seller_Id}`,{
+      withCredentials: true
+    });
     return response.data; // Assuming the response contains the seller object
   } catch (error) {
     console.error(`Error fetching seller with ID ${seller_Id}:`, error);
@@ -25,7 +29,9 @@ export const getSellerById = async (seller_Id: string): Promise<any> => {
 // Update seller profile
 export const updateseller = async (sellerId: string, sellerData: any): Promise<any> => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/sellers/${sellerId}`, sellerData);
+    const response = await axios.put(`${API_BASE_URL}/sellers/${sellerId}`, sellerData,{
+      withCredentials: true
+    });
     return response.data; // Assuming the response contains the updated seller object
   } catch (error) {
     console.error(`Error updating seller with ID ${sellerId}:`, error);
@@ -36,7 +42,9 @@ export const updateseller = async (sellerId: string, sellerData: any): Promise<a
 // Delete seller account
 export const deleteseller = async (sellerId: string): Promise<any> => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/sellers/${sellerId}`);
+    const response = await axios.delete(`${API_BASE_URL}/sellers/${sellerId}`,{
+      withCredentials: true
+    });
     return response.data; // Assuming the response confirms the deletion
   } catch (error) {
     console.error(`Error deleting seller with ID ${sellerId}:`, error);
