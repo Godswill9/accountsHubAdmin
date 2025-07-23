@@ -275,10 +275,6 @@ const [suspensionDate, setSuspensionDate] = useState("");
             <p className="font-medium">{selectedSeller.fullName}</p>
           </div>
           <div>
-            <Label className="text-sm text-muted-foreground">Sellername</Label>
-            <p className="font-medium">{selectedSeller.fullName}</p>
-          </div>
-          <div>
             <Label className="text-sm text-muted-foreground">Email</Label>
            <p className="font-medium break-words whitespace-normal text-sm leading-relaxed">
   {selectedSeller.email}

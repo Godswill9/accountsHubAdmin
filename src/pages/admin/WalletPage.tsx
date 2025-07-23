@@ -183,7 +183,7 @@ const [withdrawals, setWithdrawals] = useState([]);
     }
      try {
     const res = await axios.get(
-      `https://aitool.asoroautomotive.com/api/users/${walletId}`
+      `https://aitool.asoroautomotive.com/api/users/${walletId}`, {withCredentials:true}
     );
 
   //  console.log(res.data)
@@ -210,7 +210,7 @@ const [withdrawals, setWithdrawals] = useState([]);
     for (const userId of uniqueUserIds) {
       try {
         // Try as buyer
-        const resUser = await axios.get(`https://aitool.asoroautomotive.com/api/users/${userId}`);
+        const resUser = await axios.get(`https://aitool.asoroautomotive.com/api/users/${userId}`, {withCredentials:true});
         userCache[userId] = {
           ...resUser.data,
           userRole: "buyer"
@@ -218,7 +218,7 @@ const [withdrawals, setWithdrawals] = useState([]);
       } catch (err1) {
         try {
           // Try as seller
-          const resSeller = await axios.get(`https://aitool.asoroautomotive.com/api/sellers/${userId}`);
+          const resSeller = await axios.get(`https://aitool.asoroautomotive.com/api/sellers/${userId}`, {withCredentials:true});
           userCache[userId] = {
             ...resSeller.data.seller,
             userRole: "seller"
@@ -274,7 +274,7 @@ const handleSortByDate = () => {
 
 const handleConfirmWithdrawal = async (paymentId: string) => {
   try {
-    const res = await axios.post(`https://aitool.asoroautomotive.com/api/confirm-withdrawal/${paymentId}`);
+    const res = await axios.post(`https://aitool.asoroautomotive.com/api/confirm-withdrawal/${paymentId}`,{}, {withCredentials:true});
 
     if (res.status === 200 && res.data?.message === "Withdrawal confirmed and wallet updated") {
       setWithdrawals((prev) =>
@@ -309,7 +309,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
   if (!confirm) return;
 
   try {
-    const res = await axios.delete(`https://aitool.asoroautomotive.com/api/reject-withdrawalReq/${paymentId}`);
+    const res = await axios.delete(`https://aitool.asoroautomotive.com/api/reject-withdrawalReq/${paymentId}`, {withCredentials:true});
 
     if (res.data.status === "success") {
       toast.success("Withdrawal request rejected and removed.");
@@ -523,7 +523,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
     const res = await axios.post("https://aitool.asoroautomotive.com/api/flutterwave/checkBankDet", {
       bank_code: bankCode,
       account_number: accountNumber,
-    });
+    }, {withCredentials:true});
 
     console.log(res.data)
 
@@ -564,7 +564,8 @@ const handleRejectWithdrawal = async (paymentId: string) => {
           method,
           details,
           amount: numericAmount,
-        }
+        },
+        {withCredentials:true}
       );
 
       if (response.data.status === "success") {
@@ -603,7 +604,8 @@ const handleRejectWithdrawal = async (paymentId: string) => {
           method,
           details,
           amount: numericAmount
-        }
+        },
+        {withCredentials:true}
       );
 
      if (response.data.status === "success") {
@@ -641,7 +643,8 @@ const handleRejectWithdrawal = async (paymentId: string) => {
           method,
           details,
           amount: numericAmount
-        }
+        },
+        {withCredentials:true}
       );
 
        if (response.data.status === "success") {
@@ -679,7 +682,8 @@ const handleRejectWithdrawal = async (paymentId: string) => {
           method,
           details,
           amount: numericAmount
-        }
+        },
+        {withCredentials:true}
       );
 
     if (response.data.status === "success") {
@@ -720,7 +724,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
     }
      try {
     const res = await axios.get(
-      `https://aitool.asoroautomotive.com/api/sellers/${walletId}`
+      `https://aitool.asoroautomotive.com/api/sellers/${walletId}`,{withCredentials:true}
     );
 
   //  console.log(res.data)
@@ -1325,12 +1329,24 @@ const handleRejectWithdrawal = async (paymentId: string) => {
 
       {selectedWithdrawal?.payment_gateway === "crypto" && (
         <>
-          {selectedWithdrawal.coin && (
-            <div className="mt-2">
-              <label className="text-xs text-muted-foreground">Cryptocurrency</label>
-              <p className="px-3 py-2 rounded-md bg-yellow-50 border text-yellow-800 font-semibold">{selectedWithdrawal.coin}</p>
-            </div>
-          )}
+         {(selectedWithdrawal.coin || selectedWithdrawal.network) && (
+  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+    {selectedWithdrawal.coin && (
+      <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4">
+        <p className="text-xs text-muted-foreground mb-1">Cryptocurrency</p>
+        <p className="text-yellow-800 font-semibold text-sm">{selectedWithdrawal.coin}</p>
+      </div>
+    )}
+
+    {selectedWithdrawal.network && (
+      <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4">
+        <p className="text-xs text-muted-foreground mb-1">Crypto Network</p>
+        <p className="text-yellow-800 font-semibold text-sm">{selectedWithdrawal.network}</p>
+      </div>
+    )}
+  </div>
+)}
+
           {selectedWithdrawal.wallet_address && (
             <div>
               <label className="text-xs text-muted-foreground">Wallet Address</label>

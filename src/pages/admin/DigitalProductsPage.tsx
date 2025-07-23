@@ -335,10 +335,10 @@ const fetchImages = async (arr) => {
     showSellerDetails(product.seller_id);
 
     const fetchedProduct = await products.fetchProductDetails(product.id);
-    console.log(fetchedProduct);
+    // console.log(fetchedProduct);
     const imageBlobs = await fetchImages(fetchedProduct.images);
     // const fileBlobs = await fetchFiles(fetchedProduct.files);
-    console.log(imageBlobs);
+    // console.log(imageBlobs);
     // console.log(fileBlobs);
     setImages(imageBlobs);
     // setFiles(fileBlobs);

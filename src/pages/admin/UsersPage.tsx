@@ -265,10 +265,6 @@ const UsersPage = () => {
             <p className="font-medium">{selectedUser.fullName}</p>
           </div>
           <div>
-            <Label className="text-sm text-muted-foreground">Username</Label>
-            <p className="font-medium">{selectedUser.username}</p>
-          </div>
-          <div>
             <Label className="text-sm text-muted-foreground">Email</Label>
            <p className="font-medium break-words whitespace-normal text-sm leading-relaxed">
   {selectedUser.email}
