@@ -44,7 +44,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const fetchNotifications = async (adminId) => {
   try {
     const res = await axios.get(
-      `https://aitool.asoroautomotive.com/api/notifications/admin`
+      `${import.meta.env.VITE_API_BASE_URL}/notifications/admin`
     );
 
     const filteredNotifications = res.data.data

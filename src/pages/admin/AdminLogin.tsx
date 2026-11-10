@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { adminLogin } from "@/services/authService";
+import { adminLogin, adminVerifyCode } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<"password" | "code">("password");
+  const [code, setCode] = useState("");
   const navigate = useNavigate();
   const { isAuthenticated, login } = useAuth();
 
@@ -37,12 +39,15 @@ const AdminLogin = () => {
     }
     setIsLoading(true);
     try {
-      const response = await adminLogin({ email, password });
-      const data = await response;
-      console.log(data);
-      // If the returned message is not "Please log in again.", it's a success
-      if (data.message) {
-        toast.error(data.message);
+      // Step 1: password -> server emails a one-time code. Step 2: code -> session.
+      const data = step === "password"
+        ? await adminLogin({ email, password })
+        : await adminVerifyCode({ email, code } as any);
+      if (data.status === "otp_required") {
+        setStep("code");
+        toast.success("We sent a 6-digit code to your email.");
+      } else if (data.status !== "success") {
+        toast.error(data.message || "Login failed");
       } else {
         toast.success("Login successful");
         // Use the login function from the AuthContext to store the admin data
@@ -52,7 +57,7 @@ const AdminLogin = () => {
         }, 2000);
       }
     } catch (error: any) {
-      toast.error("Login failed. Please try again.");
+      toast.error(error?.message || "Login failed. Please try again.");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -68,11 +73,36 @@ const AdminLogin = () => {
               Admin Login
             </CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access the admin dashboard
+              {step === "password"
+                ? "Enter your credentials to access the admin dashboard"
+                : `Enter the 6-digit code we emailed to ${email}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {step === "code" ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="code">Login code</Label>
+                    <Input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
+                      placeholder="123456" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                      className="admin-input text-center tracking-[0.5em] text-lg" />
+                    <p className="text-xs text-muted-foreground">The code expires in 10 minutes.</p>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading || code.length !== 6}>
+                    {isLoading ? "Checking..." : "Verify and log in"}
+                  </Button>
+                  <div className="flex justify-between text-xs">
+                    <button type="button" className="text-primary hover:underline" onClick={() => { setStep("password"); setCode(""); }}>
+                      Back
+                    </button>
+                    <button type="button" className="text-primary hover:underline" disabled={isLoading}
+                      onClick={async () => { try { await adminLogin({ email, password }); toast.success("New code sent."); } catch { toast.error("Couldn't resend the code."); } }}>
+                      Resend code
+                    </button>
+                  </div>
+                </>
+              ) : (<>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -108,14 +138,12 @@ const AdminLogin = () => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
+              </>)}
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
             <div className="text-sm text-center text-muted-foreground">
-              Don't have an admin account?{" "}
-              <Link to="/admin/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
+              Need access? Ask an existing admin to add you.
             </div>
             <div className="text-xs text-center text-muted-foreground mt-2">
               <Link to="/" className="hover:underline">

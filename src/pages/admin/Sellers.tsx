@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import AccountActions, { AccountStatus } from "@/components/admin/AccountActions";
+import MessageAccountDialog from "@/components/admin/MessageAccountDialog";
+import { live } from "@/lib/live";
 import { getAllSellers } from "@/services/sellersServices.ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,15 +32,19 @@ interface Seller {
   email: string;
   fullName: string;
   avatar?: string;
+  profileImage?: string | null;
   created_at: Date;
   country?: string;
   phoneNumber?: string;
   preferred_currency?: string;
   verification_status?: string;
+  kyc_status?: string;
   preferred_language?: string;
   acc_status: string;
   wallet_balance: Number;
   seen: string
+  successful_orders?: number;
+  date_unsuspended?: string | null;
 }
 
 const Sellers = () => {
@@ -54,14 +61,13 @@ const [suspensionDate, setSuspensionDate] = useState("");
 
 
   useEffect(() => {
+    let first = true; // mark rows seen once per visit, not on every refresh
     const fetchsellers = async () => {
       try {
         const response = await getAllSellers();
-        console.log(response);
         setSellers(response);
-         response.forEach((item, i)=>{
-          updateSellerSeen(item.seller_id)
-        })
+        if (first) response.forEach((item) => updateSellerSeen(item.seller_id));
+        first = false;
       } catch (error) {
         console.error("Error fetching sellers:", error);
       } finally {
@@ -70,6 +76,7 @@ const [suspensionDate, setSuspensionDate] = useState("");
     };
 
     fetchsellers();
+    return live(fetchsellers);
   }, []);
 
 
@@ -83,45 +90,6 @@ const [suspensionDate, setSuspensionDate] = useState("");
 
 
 
-  const handleBanSeller = async (sellerId) => {
-  try {
-    await axios.put(`https://aitool.asoroautomotive.com/api/sellers/${sellerId}/account-status`, {
-      acc_status: "Banned",
-    });
-    toast.success("Seller banned successfully");
-    setIsDialogOpen(false);
-  } catch (error) {
-    toast.error("Failed to ban seller.");
-  }
-};
-  const revokeBanSeller = async (sellerId) => {
-  try {
-    await axios.put(`https://aitool.asoroautomotive.com/api/sellers/${sellerId}/account-status`, {
-      acc_status: "Okay",
-    });
-    toast.success("Seller unbanned successfully");
-    setIsDialogOpen(false);
-  } catch (error) {
-    toast.error("Failed to unban seller.");
-  }
-};
-
-  const handleSuspendSeller = async (date, sellerId) => {
-  if (!date) {
-    toast.error("Please select a suspension expiry date.");
-    return;
-  }
-
-  try {
-    await axios.put(`https://aitool.asoroautomotive.com/api/sellers/${sellerId}/suspension-dates`, {
-     date_unsuspended: new Date(date).toISOString()
-    });
-    toast.success("Seller suspended successfully");
-    setIsDialogOpen(false);
-  } catch (error) {
-    toast.error("Failed to suspend seller.");
-  }
-};
 
 
 
@@ -134,7 +102,7 @@ const [suspensionDate, setSuspensionDate] = useState("");
      const updateSellerSeen = async (sellerId: string) => {
     try {
       const response = await axios.put(
-        `https://aitool.asoroautomotive.com/api/sellers/updateSeen/${sellerId}`
+        `${import.meta.env.VITE_API_BASE_URL}/sellers/updateSeen/${sellerId}`
       );
       console.log("seller marked as seen:", response.data);
       return response.data;
@@ -186,8 +154,10 @@ const [suspensionDate, setSuspensionDate] = useState("");
             <TableHead>Full Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Joined</TableHead>
-            <TableHead>Verification status</TableHead>
+            <TableHead>Email verified</TableHead>
+            <TableHead>KYC (NIN)</TableHead>
             <TableHead>Wallet balance</TableHead>
+            <TableHead>Successful orders</TableHead>
             <TableHead>Account status</TableHead>
             <TableHead>Id</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -196,7 +166,7 @@ const [suspensionDate, setSuspensionDate] = useState("");
         <TableBody>
           {filteredsellers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-10">
+              <TableCell colSpan={10} className="text-center py-10">
                 No sellers found
               </TableCell>
             </TableRow>
@@ -224,8 +194,16 @@ const [suspensionDate, setSuspensionDate] = useState("");
                     </span>
                   )}
                 </TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                    { approved: "text-green-700 bg-green-100", pending: "text-yellow-800 bg-yellow-100", rejected: "text-red-700 bg-red-100" }[seller.kyc_status || ""] || "text-gray-600 bg-gray-100"
+                  }`}>
+                    {(seller.kyc_status || "not_submitted").replace("_", " ")}
+                  </span>
+                </TableCell>
                 <TableCell>${Number(seller.wallet_balance)}</TableCell>
-                <TableCell>{seller.acc_status}</TableCell>
+                <TableCell>{seller.successful_orders ?? 0}</TableCell>
+                <TableCell><AccountStatus status={seller.acc_status} until={seller.date_unsuspended} /></TableCell>
                 <TableCell>{seller.seller_id}</TableCell>
                    <TableCell className="text-right space-x-2">
                                     <Button
@@ -248,9 +226,9 @@ const [suspensionDate, setSuspensionDate] = useState("");
  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
   <DialogContent className="w-[90%] h-[80%] max-w-md mx-auto rounded-lg overflow-y-auto">
     <DialogHeader>
-        {selectedSeller?.avatar ? (
+        {(selectedSeller?.profileImage || selectedSeller?.avatar) ? (
     <img
-      src={selectedSeller.avatar}
+      src={selectedSeller.profileImage || selectedSeller.avatar}
       alt="Seller"
       className="h-20 w-20 rounded-full object-cover mb-2"
     />
@@ -299,6 +277,14 @@ const [suspensionDate, setSuspensionDate] = useState("");
             </p>
           </div>
           <div>
+            <Label className="text-sm text-muted-foreground">Successful orders</Label>
+            <p className="font-medium">{selectedSeller.successful_orders ?? 0}</p>
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">Account status</Label>
+            <p className="mt-1"><AccountStatus status={selectedSeller.acc_status} until={selectedSeller.date_unsuspended} /></p>
+          </div>
+          <div>
             <Label className="text-sm text-muted-foreground">Verified</Label>
             <p className="font-medium capitalize">
               {selectedSeller.verification_status == "true" || selectedSeller.verification_status == "verified"? "Verified": "No"}
@@ -320,58 +306,15 @@ const [suspensionDate, setSuspensionDate] = useState("");
       </div>
     )}
 
-    {actionType === "suspend" && (
-  <div className="mt-4 space-y-3">
-    <Label htmlFor="suspend-date" className="font-medium text-sm text-gray-700">
-      Suspension Expires On
-    </Label>
-    <Input
-      type="datetime-local"
-      id="suspend-date"
-      value={suspensionDate}
-      onChange={(e) => setSuspensionDate(e.target.value)}
-      className="w-full"
-    />
-
-    <Button
-      className="w-full mt-2"
-      onClick={() => handleSuspendSeller(suspensionDate, selectedSeller.seller_id)}
-    >
-      Confirm Suspension
-    </Button>
-  </div>
-)}
-
  {selectedSeller && (
-  <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 mt-6 border-t pt-4">
-    {selectedSeller.acc_status === "Suspended" ? (
-      <div className="text-sm text-yellow-700 bg-yellow-100 px-3 py-2 rounded-md font-medium">
-        Seller is currently suspended
-      </div>
-    ) : (
-      <Button
-        variant="destructive"
-        onClick={() => setActionType("suspend")}
-      >
-        Suspend Seller
-      </Button>
-    )}
-
-    {selectedSeller.acc_status === "Banned" ? (
-      <Button
-        variant="default"
-        onClick={() => revokeBanSeller(selectedSeller.seller_id)}
-      >
-        Unban Seller
-      </Button>
-    ) : (
-      <Button
-        variant="destructive"
-        onClick={() => handleBanSeller(selectedSeller.seller_id)}
-      >
-        Ban Seller
-      </Button>
-    )}
+  <DialogFooter className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-3 mt-6 border-t pt-4">
+    <MessageAccountDialog recipientId={selectedSeller.seller_id} recipientType="seller" name={selectedSeller.fullName} />
+    <AccountActions kind="seller" id={selectedSeller.seller_id} status={selectedSeller.acc_status}
+      onDone={(acc_status, date_unsuspended) => {
+        const upd = (x: Seller) => (x.seller_id === selectedSeller.seller_id ? { ...x, acc_status, date_unsuspended } : x);
+        setSellers((prev) => prev.map(upd));
+        setSelectedSeller((x) => (x ? upd(x) : x));
+      }} />
   </DialogFooter>
 )}
 

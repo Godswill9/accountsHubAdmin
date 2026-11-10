@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { live } from "@/lib/live";
 import { cn } from "@/lib/utils";
 import { getAllUsers } from "@/services/userService";
 import {
@@ -32,7 +33,9 @@ import {
   User,
   LayoutDashboard,
   X,
+  ShieldCheck,
 } from "lucide-react";
+import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -103,6 +106,7 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
 
    const [payments, setPayments] = useState([])
   const [sellers, setSellers] = useState([])
+  const [pendingKyc, setPendingKyc] = useState(0)
   const [users, setUsers] = useState([])
   const [orders, setOrders] = useState([])
   const [data, setData] = useState([])
@@ -114,12 +118,18 @@ const totalUnreadConversations = Object.keys(unreadCounts).length;
 
   
   useEffect(()=>{
-fetchPayments();
-  fetchOrders();
-  fetchData();
-  fetchSellers();
-  fetchUsers();
-fetchTickets()
+    const loadCounts = () => {
+      fetchPayments();
+      fetchOrders();
+      fetchData();
+      fetchSellers();
+      fetchUsers();
+      fetchTickets();
+      axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/kyc`, { params: { status: "pending" } })
+        .then((r) => setPendingKyc(r.data.data?.length || 0)).catch(() => {});
+    };
+    loadCounts();
+    return live(loadCounts, 15000); // sidebar badges; many requests per run, so a slower pace
   },[])
 
 
@@ -291,15 +301,11 @@ const fetchOrders = async () => {
         <div className="border-b border-border p-4 flex justify-between items-center">
           <Link
             to="/admin/dashboard"
-            className="flex items-center gap-2 font-bold text-xl"
+            className="flex items-center gap-2 min-w-0"
           >
-            <img
-              src="https://accountshub.onrender.com/lovable-uploads/b8bc2363-f8b3-49a4-bec6-1490e3aa106a-removebg-preview.png"
-              alt="AccountsHub Logo"
-              className="h-10 w-auto bg-white p-2 rounded-full"
-            />
-            <span className="text-sm bg-white p-2 rounded-full">
-              AccountsHub Admin Dashboard
+            <img src="/logo.png" alt="AccountsHub" className="h-8 w-auto shrink-0" />
+            <span className="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-brand-700">
+              Admin
             </span>
           </Link>
           {isMobile && (
@@ -323,6 +329,12 @@ const fetchOrders = async () => {
               onClick={onClose}
             />
             <SidebarLink
+              href="/admin/dashboard/admins"
+              icon={ShieldCheck}
+              label="Admins"
+              onClick={onClose}
+            />
+            <SidebarLink
               href="/admin/dashboard/users"
               icon={Users}
               label="Users Management"
@@ -334,6 +346,13 @@ const fetchOrders = async () => {
               icon={Users}
               label="Sellers Management"
               count={sellers.length}
+              onClick={onClose}
+            />
+            <SidebarLink
+              href="/admin/dashboard/seller-verification"
+              icon={ShieldCheck}
+              label="Seller Verification"
+              count={pendingKyc}
               onClick={onClose}
             />
             <SidebarLink
