@@ -29,6 +29,8 @@ import ProfilePage from "./pages/admin/ProfilePage";
 import DigitalProductsPage from "./pages/admin/DigitalProductsPage";
 import HomepageManagementPage from "./pages/admin/HomepageManagementPage";
 import Sellers from "./pages/admin/Sellers";
+import SellerVerification from "./pages/admin/SellerVerification";
+import AdminsPage from "./pages/admin/AdminsPage";
 import PendingDigitalProduct from "./pages/admin/PendingDigitalProducts";
 import NotificationsPage from "./pages/admin/Notifications";
 
@@ -37,6 +39,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      refetchInterval: 5000, // live data; paused in hidden tabs
     },
   },
 });
@@ -73,6 +76,8 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="sellers" element={<Sellers />} />
+              <Route path="seller-verification" element={<SellerVerification />} />
+              <Route path="admins" element={<AdminsPage />} />
               {/* <Route path="products" element={<ProductsPage />} /> */}
               <Route
                 path="digital-products"

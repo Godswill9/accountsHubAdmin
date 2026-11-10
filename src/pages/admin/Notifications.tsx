@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { live } from "@/lib/live";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,12 +41,13 @@ const NotificationsPage = () => {
         notification_type: "user",
       }));
       fetchNotifications(admin.admin_id);
+      return live(() => fetchNotifications(admin.admin_id));
     }
   }, [admin]);
 
   const fetchNotifications = async (adminId) => {
     const res = await axios.get(
-      `https://aitool.asoroautomotive.com/api/notifications/admin`
+      `${import.meta.env.VITE_API_BASE_URL}/notifications/admin`
     );
     setNotifications(res.data.data);
     res.data.data.forEach((item, i)=>{
@@ -68,7 +70,7 @@ const NotificationsPage = () => {
 
   const handlePostNotification = async () => {
     await axios.post(
-      "https://aitool.asoroautomotive.com/api/notify/admin",
+      `${import.meta.env.VITE_API_BASE_URL}/notify/admin`,
       newNotification
     );
     setNewNotification((prev) => ({
@@ -82,7 +84,7 @@ const NotificationsPage = () => {
 
   const handleDelete = async (id) => {
     await axios.delete(
-      `https://aitool.asoroautomotive.com/api/notifications/admin/${id}`
+      `${import.meta.env.VITE_API_BASE_URL}/notifications/admin/${id}`
     );
     fetchNotifications(admin.admin_id);
   };
@@ -90,7 +92,7 @@ const NotificationsPage = () => {
       const updateNotificationSeen = async (NotificationId: string) => {
     try {
       const response = await axios.put(
-        `https://aitool.asoroautomotive.com/api/notice-seen/${NotificationId}`
+        `${import.meta.env.VITE_API_BASE_URL}/notice-seen/${NotificationId}`
       );
       console.log("Notification marked as seen:", response.data);
       return response.data;
@@ -100,7 +102,7 @@ const NotificationsPage = () => {
   };
 
   //   const handleDeleteAll = async () => {
-  //     await axios.delete("https://aitool.asoroautomotive.com/api/notifications");
+  //     await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/notifications`);
   //     fetchNotifications(admin.admin_id);
   //   };
 

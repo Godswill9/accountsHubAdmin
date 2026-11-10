@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { live } from "@/lib/live";
 import * as products from "@/services/productService";
 import { getSellerById } from "@/services/sellersServices";
 import axios from "axios";
@@ -222,25 +223,25 @@ const DigitalProductsPage = () => {
 
 
   useEffect(() => {
+    let first = true; // mark rows seen once per visit, not on every refresh
     const fetchData = async () => {
       try {
         const fetchedProducts = await products.fetchAllProducts();
-        fetchedProducts.forEach((item, i)=>{
-          // console.log(item)
-          updateProductSeen(item.id)
-        })
+        if (first) fetchedProducts.forEach((item) => updateProductSeen(item.id));
+        first = false;
         const validProducts = fetchedProducts.filter(
           (product) => product.status === "approved"
         );
         setData(validProducts);
       } catch (error) {
-        toast.error("Failed to fetch products");
+        console.error("Failed to fetch products", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
+    return live(fetchData);
   }, []);
 
   useEffect(() => {
@@ -255,7 +256,7 @@ const DigitalProductsPage = () => {
 //   try {
 //     const filePromises = arr.map(async (item) => {
 //       const response = await fetch(
-//         `https://aitool.asoroautomotive.com/api/digital-product-file/${item.id}`,
+//         `${import.meta.env.VITE_API_BASE_URL}/digital-product-file/${item.id}`,
 //         {
 //           method: "GET",
 //           credentials: "include",
@@ -292,7 +293,7 @@ const fetchImages = async (arr) => {
   try {
     const imagePromises = arr.map(async (item) => {
       const response = await fetch(
-        `https://aitool.asoroautomotive.com/api/get-product-image/${item.id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/get-product-image/${item.id}`,
         {
           method: "GET",
           credentials: "include",
@@ -362,7 +363,7 @@ const fetchImages = async (arr) => {
      const updateProductSeen = async (ProductId: string) => {
     try {
       const response = await axios.put(
-        `https://aitool.asoroautomotive.com/api/product-seen/${ProductId}`
+        `${import.meta.env.VITE_API_BASE_URL}/product-seen/${ProductId}`
       );
       console.log("Product marked as seen:", response.data);
       return response.data;
@@ -380,7 +381,7 @@ const fetchImages = async (arr) => {
       // If the product should be added to the homepage
       try {
         const response = await axios.post(
-          "https://aitool.asoroautomotive.com/api/post-product-to-homepage",
+          `${import.meta.env.VITE_API_BASE_URL}/post-product-to-homepage`,
           {
             product_id: productId,
             position: position,
@@ -389,8 +390,8 @@ const fetchImages = async (arr) => {
 
         if (response.status === 201) {
           // Successfully added to homepage
-          alert("Product added to the homepage successfully");
-          window.location.reload();
+          toast.success("Product added to the homepage");
+          setTimeout(() => window.location.reload(), 800);
         }
       } catch (error) {
         console.error("Error adding product to homepage", error);
@@ -399,13 +400,13 @@ const fetchImages = async (arr) => {
       // If the product should be removed from the homepage
       try {
         const response = await axios.put(
-          `https://aitool.asoroautomotive.com/api/remove-product-from-homepage/${productId}`
+          `${import.meta.env.VITE_API_BASE_URL}/remove-product-from-homepage/${productId}`
         );
 
         if (response.status === 200) {
           // Successfully removed from homepage
-          alert("Product removed from homepage successfully");
-          window.location.reload(); // Reload the page to reflect changes
+          toast.success("Product removed from the homepage");
+          setTimeout(() => window.location.reload(), 800); // Reload the page to reflect changes
         }
       } catch (error) {
         console.error("Error removing product from homepage", error);
@@ -801,7 +802,7 @@ const fetchImages = async (arr) => {
                   <img
                     src={getPlatformImage(product.platform_name)}
                     alt=""
-                    className="inline-block h-8 w-8 mr-2"
+                    className="inline-block h-8 w-8 mr-2 object-contain"
                   />
                 </TableCell>
                 <TableCell>{product.category}</TableCell>
@@ -1146,7 +1147,7 @@ const fetchImages = async (arr) => {
                         <img
                           src={getPlatformImage(currentProduct.platform_name)}
                           alt=""
-                          className="inline-block h-8 w-8 mr-2"
+                          className="inline-block h-8 w-8 mr-2 object-contain"
                         />
                       </p>
                     </div>

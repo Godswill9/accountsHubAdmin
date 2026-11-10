@@ -32,6 +32,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPlatformImage } from "@/lib/platformImages";
+import Person from "@/components/admin/Person";
+import MessageAccountDialog from "@/components/admin/MessageAccountDialog";
 
 interface Order {
   order_id: string;
@@ -45,6 +47,8 @@ interface Order {
   item_name?: string;
   seller_id?: string;
   seen_by_admin?:string;
+  buyer_name?: string; buyer_account_email?: string;
+  seller_name?: string; seller_email?: string;
 }
 
 const statusOptions = [
@@ -85,7 +89,7 @@ const OrdersPage = () => {
       const updateOrdersSeen = async (OrdersId: string) => {
     try {
       const response = await axios.put(
-        `https://aitool.asoroautomotive.com/api/admin-order-seen/${OrdersId}`
+        `${import.meta.env.VITE_API_BASE_URL}/admin-order-seen/${OrdersId}`
       );
       console.log("Orders marked as seen:", response.data);
       return response.data;
@@ -130,7 +134,9 @@ const OrdersPage = () => {
         order.order_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (order.buyer_id &&
-          order.buyer_id.toLowerCase().includes(searchQuery.toLowerCase()))
+          order.buyer_id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        `${order.buyer_name || ""} ${order.buyer_account_email || ""} ${order.seller_name || ""} ${order.seller_email || ""}`
+          .toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
 
   const handleOpenDialog = (order: Order, viewMode = false) => {
@@ -204,6 +210,8 @@ const OrdersPage = () => {
           <TableRow>
             <TableHead>Platform</TableHead>
             <TableHead>Order ID</TableHead>
+            <TableHead>Buyer</TableHead>
+            <TableHead>Seller</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Amount</TableHead>
@@ -215,7 +223,7 @@ const OrdersPage = () => {
         <TableBody>
           {filteredOrders.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-10">
+              <TableCell colSpan={9} className="text-center py-10">
                 No orders found
               </TableCell>
             </TableRow>
@@ -229,13 +237,15 @@ const OrdersPage = () => {
                   <img
                     src={getPlatformImage(order.item_name)}
                     alt=""
-                    className="inline-block h-8 w-8 mr-2"
+                    className="inline-block h-8 w-8 mr-2 object-contain"
                   />
                 </TableCell>
 
                 <TableCell className="font-medium">
                   {order.order_id}
                 </TableCell>
+                <TableCell><Person name={order.buyer_name} email={order.buyer_account_email || order.buyer_email} id={order.buyer_id} /></TableCell>
+                <TableCell><Person name={order.seller_name} email={order.seller_email} id={order.seller_id} /></TableCell>
 
                 <TableCell>
                   {new Date(order.created_at).toLocaleDateString()}
@@ -325,7 +335,7 @@ const OrdersPage = () => {
                   <img
                     src={getPlatformImage(selectedOrder.item_name)}
                     alt=""
-                    className="inline-block h-8 w-8 mr-2"
+                    className="inline-block h-8 w-8 mr-2 object-contain"
                   />
                 </div>
                 <div>
@@ -350,28 +360,25 @@ const OrdersPage = () => {
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">
-                    Buyer ID
+                    Buyer
                   </Label>
-                  <p className="font-medium">
-                    {selectedOrder.buyer_id || "N/A"}
-                  </p>
+                  <Person name={selectedOrder.buyer_name} email={selectedOrder.buyer_account_email || selectedOrder.buyer_email} id={selectedOrder.buyer_id} />
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">
-                    Buyer Email
+                    Seller
                   </Label>
-                  <p className="font-medium">
-                    {selectedOrder.buyer_email || "N/A"}
-                  </p>
+                  <Person name={selectedOrder.seller_name || (selectedOrder.seller_id ? null : "AccountsHub")} email={selectedOrder.seller_email} id={selectedOrder.seller_id} />
                 </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">
-                    Seller ID
-                  </Label>
-                  <p className="font-medium">
-                    {selectedOrder.seller_id || "ADMIN"}
-                  </p>
-                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {selectedOrder.buyer_id && (
+                  <MessageAccountDialog recipientId={selectedOrder.buyer_id} recipientType="user" name={selectedOrder.buyer_name} label="Message buyer" />
+                )}
+                {selectedOrder.seller_id && selectedOrder.seller_id !== "admin" && (
+                  <MessageAccountDialog recipientId={selectedOrder.seller_id} recipientType="seller" name={selectedOrder.seller_name} label="Message seller" />
+                )}
               </div>
 
               {isViewMode ? (

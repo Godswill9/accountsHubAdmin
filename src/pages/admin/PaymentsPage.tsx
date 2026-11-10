@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Person from "@/components/admin/Person";
 import {
   getAllPayments,
   getUserPayments,
@@ -39,6 +40,7 @@ interface Payment {
   transaction_type: string;
   user_id: string;
   seen_by_admin:string;
+  user_name?: string; user_email?: string; user_type?: string;
 }
 
 const PaymentsPage = () => {
@@ -70,7 +72,7 @@ const PaymentsPage = () => {
      const updatePaymentSeen = async (PaymentId: string) => {
     try {
       const response = await axios.put(
-        `https://aitool.asoroautomotive.com/api/admin-payment-seen/${PaymentId}`
+        `${import.meta.env.VITE_API_BASE_URL}/admin-payment-seen/${PaymentId}`
       );
       console.log("Payment marked as seen:", response.data);
       return response.data;
@@ -149,6 +151,7 @@ const PaymentsPage = () => {
     (payment: Payment) =>
       payment.payment_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       payment.user_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${payment.user_name || ""} ${payment.user_email || ""}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       payment.payment_status.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -225,7 +228,7 @@ const PaymentsPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Payment ID</TableHead>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Payment for</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Method</TableHead>
@@ -254,7 +257,7 @@ const PaymentsPage = () => {
     <TableCell className="font-medium">
       {payment.payment_id}
     </TableCell>
-    <TableCell>{payment.user_id}</TableCell>
+    <TableCell><Person name={payment.user_name} email={payment.user_email} type={payment.user_type} id={payment.user_id} /></TableCell>
     <TableCell>{payment.payment_type}</TableCell>
     <TableCell>
       ${Number(payment.amount).toFixed(2)}
@@ -320,9 +323,9 @@ const PaymentsPage = () => {
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">
-                    User ID
+                    User
                   </Label>
-                  <p className="font-medium">{selectedPayment.user_id}</p>
+                  <Person name={selectedPayment.user_name} email={selectedPayment.user_email} type={selectedPayment.user_type} id={selectedPayment.user_id} />
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">

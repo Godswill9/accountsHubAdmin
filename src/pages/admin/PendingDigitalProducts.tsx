@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { live } from "@/lib/live";
 import * as products from "@/services/productService";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";
@@ -203,7 +204,7 @@ const PendingDigitalProduct = () => {
   try {
     const filePromises = arr.map(async (item) => {
       const response = await fetch(
-        `https://aitool.asoroautomotive.com/api/digital-product-file/${item.id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/digital-product-file/${item.id}`,
         {
           method: "GET",
           credentials: "include",
@@ -238,7 +239,7 @@ const fetchImages = async (arr) => {
   try {
     const imagePromises = arr.map(async (item) => {
       const response = await fetch(
-        `https://aitool.asoroautomotive.com/api/get-product-image/${item.id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/get-product-image/${item.id}`,
         {
           method: "GET",
           credentials: "include",
@@ -273,13 +274,14 @@ const fetchImages = async (arr) => {
         );
         setData(pendingProducts);
       } catch (error) {
-        toast.error("Failed to fetch products");
+        console.error("Failed to fetch products", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
+    return live(fetchData);
   }, []);
 
   const handleOpenDialog = async (product: any) => {
@@ -591,7 +593,7 @@ const fetchImages = async (arr) => {
                   <img
                     src={getPlatformImage(product.platform_name)}
                     alt=""
-                    className="inline-block h-8 w-8 mr-2"
+                    className="inline-block h-8 w-8 mr-2 object-contain"
                   />
                 </TableCell>
 
@@ -686,7 +688,7 @@ const fetchImages = async (arr) => {
                         <img
                           src={getPlatformImage(selectedProduct.platform_name)}
                           alt=""
-                          className="inline-block h-8 w-8 mr-2"
+                          className="inline-block h-8 w-8 mr-2 object-contain"
                         />
                       </p>
                     </div>
@@ -840,7 +842,7 @@ const fetchImages = async (arr) => {
               onClick={async () => {
                 try {
                   const res = await fetch(
-                    `https://aitool.asoroautomotive.com/api/products/${selectedProduct.id}/approve`,
+                    `${import.meta.env.VITE_API_BASE_URL}/products/${selectedProduct.id}/approve`,
                     {
                       method: "PATCH",
                       headers: {
@@ -852,13 +854,13 @@ const fetchImages = async (arr) => {
 
                   if (!res.ok) throw new Error("Failed to approve product");
 
-                  alert("Product approved!");
+                  toast.success("Product approved");
                   setTimeout(() => {
                     window.location.reload()
-                  }, 200);
+                  }, 800);
                   setIsDialogOpen(false); // optionally close dialog
                 } catch (err) {
-                  alert("Error approving product");
+                  toast.error("Error approving product");
                   console.error(err);
                 }
               }}

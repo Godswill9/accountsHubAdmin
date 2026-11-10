@@ -19,6 +19,10 @@ export default {
 			}
 		},
 		extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Poppins', 'Inter', 'sans-serif'],
+      },
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -53,10 +57,22 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				blue: {
+					50: '#eef0fa', 100: '#dde1f4', 200: '#bcc3e9', 300: '#929cd9', 400: '#6773c4',
+					500: '#4752ad', 600: '#343f93', 700: '#2b3478', 800: '#242c5d', 900: '#1c2349', 950: '#121634',
+				},
+				purple: { 50: '#eef0fa', 100: '#dde1f4', 200: '#bcc3e9', 300: '#929cd9', 400: '#6773c4', 500: '#4752ad', 600: '#343f93', 700: '#2b3478', 800: '#242c5d', 900: '#1c2349', 950: '#121634' },
+				indigo: {
+					50: '#eef0fa', 100: '#dde1f4', 200: '#bcc3e9', 300: '#929cd9', 400: '#6773c4',
+					500: '#4752ad', 600: '#343f93', 700: '#2b3478', 800: '#242c5d', 900: '#1c2349', 950: '#121634',
+				},
 				brand: {
-					blue: "#0952CC",
-					lightBlue: "#3B82F6",
-					darkBlue: "#0A3A7D",
+					// AccountsHub brand scale (logo navy #242c5d = 800); blue/indigo alias it.
+					50: '#eef0fa', 100: '#dde1f4', 200: '#bcc3e9', 300: '#929cd9', 400: '#6773c4',
+					500: '#4752ad', 600: '#343f93', 700: '#2b3478', 800: '#242c5d', 900: '#1c2349', 950: '#121634',
+					blue: '#242c5d',
+					lightBlue: '#4752ad',
+					darkBlue: '#1c2349',
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',

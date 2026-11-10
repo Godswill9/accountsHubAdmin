@@ -50,7 +50,7 @@ const ProductDetail = () => {
 
   function downloadFiles(fileArray: []) {
     fetch(
-      `https://aitool.asoroautomotive.com/api/download-digital-products?ids=${fileArray.join(
+      `${import.meta.env.VITE_API_BASE_URL}/download-digital-products?ids=${fileArray.join(
         ","
       )}`,
       {
@@ -82,7 +82,7 @@ const ProductDetail = () => {
   async function downloadfetchAcc(fileCount: Number) {
     try {
       const response = await fetch(
-        `https://aitool.asoroautomotive.com/api/digital-products/${id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/digital-products/${id}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },

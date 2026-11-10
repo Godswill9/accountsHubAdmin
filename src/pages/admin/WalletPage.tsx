@@ -183,7 +183,7 @@ const [withdrawals, setWithdrawals] = useState([]);
     }
      try {
     const res = await axios.get(
-      `https://aitool.asoroautomotive.com/api/users/${walletId}`, {withCredentials:true}
+      `${import.meta.env.VITE_API_BASE_URL}/users/${walletId}`, {withCredentials:true}
     );
 
   //  console.log(res.data)
@@ -210,7 +210,7 @@ const [withdrawals, setWithdrawals] = useState([]);
     for (const userId of uniqueUserIds) {
       try {
         // Try as buyer
-        const resUser = await axios.get(`https://aitool.asoroautomotive.com/api/users/${userId}`, {withCredentials:true});
+        const resUser = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/users/${userId}`, {withCredentials:true});
         userCache[userId] = {
           ...resUser.data,
           userRole: "buyer"
@@ -218,7 +218,7 @@ const [withdrawals, setWithdrawals] = useState([]);
       } catch (err1) {
         try {
           // Try as seller
-          const resSeller = await axios.get(`https://aitool.asoroautomotive.com/api/sellers/${userId}`, {withCredentials:true});
+          const resSeller = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/sellers/${userId}`, {withCredentials:true});
           userCache[userId] = {
             ...resSeller.data.seller,
             userRole: "seller"
@@ -274,7 +274,7 @@ const handleSortByDate = () => {
 
 const handleConfirmWithdrawal = async (paymentId: string) => {
   try {
-    const res = await axios.post(`https://aitool.asoroautomotive.com/api/confirm-withdrawal/${paymentId}`,{}, {withCredentials:true});
+    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/confirm-withdrawal/${paymentId}`,{}, {withCredentials:true});
 
     if (res.status === 200 && res.data?.message === "Withdrawal confirmed and wallet updated") {
       setWithdrawals((prev) =>
@@ -309,7 +309,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
   if (!confirm) return;
 
   try {
-    const res = await axios.delete(`https://aitool.asoroautomotive.com/api/reject-withdrawalReq/${paymentId}`, {withCredentials:true});
+    const res = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/reject-withdrawalReq/${paymentId}`, {withCredentials:true});
 
     if (res.data.status === "success") {
       toast.success("Withdrawal request rejected and removed.");
@@ -520,7 +520,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
 
   try {
     setBankCheckLoading(true);
-    const res = await axios.post("https://aitool.asoroautomotive.com/api/flutterwave/checkBankDet", {
+    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/flutterwave/checkBankDet`, {
       bank_code: bankCode,
       account_number: accountNumber,
     }, {withCredentials:true});
@@ -559,7 +559,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
       setIsSubmitting(true);
 
       const response = await axios.post(
-        `https://aitool.asoroautomotive.com/api/flutterwave/withdraw/${admin.admin_id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/flutterwave/withdraw/${admin.admin_id}`,
         {
           method,
           details,
@@ -599,7 +599,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
       setIsSubmitting(true);
 
       const response = await axios.post(
-        `https://aitool.asoroautomotive.com/api/withdraw/paypal/${admin.admin_id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/withdraw/paypal/${admin.admin_id}`,
         {
           method,
           details,
@@ -638,7 +638,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
       setIsSubmitting(true);
 
       const response = await axios.post(
-        `https://aitool.asoroautomotive.com/api/withdraw/payoneer/${admin.admin_id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/withdraw/payoneer/${admin.admin_id}`,
         {
           method,
           details,
@@ -677,7 +677,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
       setIsSubmitting(true);
 
       const response = await axios.post(
-        `https://aitool.asoroautomotive.com/api/withdraw/crypto/${admin.admin_id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/withdraw/crypto/${admin.admin_id}`,
         {
           method,
           details,
@@ -724,7 +724,7 @@ const handleRejectWithdrawal = async (paymentId: string) => {
     }
      try {
     const res = await axios.get(
-      `https://aitool.asoroautomotive.com/api/sellers/${walletId}`,{withCredentials:true}
+      `${import.meta.env.VITE_API_BASE_URL}/sellers/${walletId}`,{withCredentials:true}
     );
 
   //  console.log(res.data)

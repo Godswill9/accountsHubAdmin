@@ -74,7 +74,7 @@ const [selectedImage, setSelectedImage] = useState<string | null>(null);
     queryKey: ["messages", ticketId],
     queryFn: () => getMessagesByTicketId(ticketId!),
     enabled: !!ticketId,
-    refetchInterval: 40000, // Refetch messages every 40 seconds
+    refetchInterval: 4000, // near-real-time; react-query pauses while the tab is hidden
   });
 
   const sendMessageMutation = useMutation({
@@ -101,7 +101,7 @@ const [selectedImage, setSelectedImage] = useState<string | null>(null);
           const fetchImage = async (link: string) => {
             try {
               const response = await fetch(
-                `https://aitool.asoroautomotive.com/api/${link}`,
+                `${import.meta.env.VITE_API_BASE_URL}/${link}`,
                 {
                   method: "GET",
                   credentials: "include",
@@ -243,6 +243,8 @@ const [selectedImage, setSelectedImage] = useState<string | null>(null);
       for (let i = 0; i < files.length; i++) {
         formData.append("files", files[i]);
       }
+      formData.append("ticketId", ticketId!);
+      formData.append("senderId", "admin"); // this browser may also hold a buyer/seller login
 
       uploadFilesMutation.mutate(formData);
     } else {

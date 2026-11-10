@@ -6,33 +6,34 @@ import soundcloudLogo from './soundcloud.jpg'
 import wechatlogo from './wechat.png'
 
 
+// Logos are served from public/platforms (downloaded once; hotlinked Wikimedia thumbs broke).
 const platformImages: { [key: string]: string } = {
-  facebook: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/2048px-2023_Facebook_icon.svg.png",
-  instagram: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/1200px-Instagram_logo_2022.svg.png",
-  twitter: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/X_logo_2023_original.svg/2048px-X_logo_2023_original.svg.png",
+  facebook: "/platforms/facebook.svg",
+  instagram: "/platforms/instagram.svg",
+  twitter: "/platforms/twitter.svg",
   reddit: redditLogo,
-  youtube: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/2560px-YouTube_full-color_icon_%282017%29.svg.png",
-  tiktok: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/TikTok_logo.svg/2560px-TikTok_logo.svg.png",
-  linkedin: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png",
-  gmail: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png",
-  snapchat: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c4/Snapchat_logo.svg/1200px-Snapchat_logo.svg.png",
-  telegram: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/2048px-Telegram_logo.svg.png",
-  whatsapp: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg",
-  pinterest: "https://upload.wikimedia.org/wikipedia/commons/0/08/Pinterest-logo.png",
-  discord: "https://upload.wikimedia.org/wikipedia/en/9/98/Discord_logo.svg",
+  youtube: "/platforms/youtube.svg",
+  tiktok: "/platforms/tiktok.svg",
+  linkedin: "/platforms/linkedin.png",
+  gmail: "/platforms/gmail.svg",
+  snapchat: "/platforms/snapchat.svg",
+  telegram: "/platforms/telegram.svg",
+  whatsapp: "/platforms/whatsapp.svg",
+  pinterest: "/platforms/pinterest.png",
+  discord: "/platforms/discord.svg",
   twitch: twitchLogo,
   tumblr: tumblrLogo,
-  vimeo:"https://upload.wikimedia.org/wikipedia/commons/9/9c/Vimeo_Logo.svg",
-  medium: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Medium_logo_Monogram.svg",
-  quora: "https://upload.wikimedia.org/wikipedia/commons/9/91/Quora_logo_2015.svg",
-  wechat: "https://upload.wikimedia.org/wikipedia/commons/2/2d/WeChat_Logo.png",
+  vimeo: "/platforms/vimeo.svg",
+  medium: "/platforms/medium.svg",
+  quora: "/platforms/quora.svg",
+  wechat: wechatlogo,
   kakaotalk: kakaotalkLogo,
-  spotify: "https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg",
+  spotify: "/platforms/spotify.svg",
   soundcloud: soundcloudLogo,
-  apple: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-  amazon: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-  microsoft: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-  default: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/310px-Placeholder_view_vector.svg.png"
+  apple: "/platforms/apple.svg",
+  amazon: "/platforms/amazon.svg",
+  microsoft: "/platforms/microsoft.svg",
+  default: "/placeholder.svg"
 };
 
 export const getPlatformImage = (platformName: string): string => {

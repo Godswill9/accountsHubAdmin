@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import AccountActions, { AccountStatus } from "@/components/admin/AccountActions";
+import MessageAccountDialog from "@/components/admin/MessageAccountDialog";
+import { live } from "@/lib/live";
 import { getAllUsers } from "@/services/userService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +45,7 @@ interface User {
   acc_status: string;
   wallet_balance: Number;
   seen?:string;
+  date_unsuspended?: string | null;
   profilePhoto?:string;
 }
 
@@ -55,14 +59,12 @@ const UsersPage = () => {
     const [isViewMode, setIsViewMode] = useState(false);
 
   useEffect(() => {
+    let first = true; // mark rows seen once per visit, not on every refresh
     const fetchUsers = async () => {
       try {
         const response = await getAllUsers();
-        console.log(response);
-        response.forEach((item, i)=>{
-          // console.log(item.id)
-          updateUserSeen(item.id)
-        })
+        if (first) response.forEach((item) => updateUserSeen(item.id));
+        first = false;
         setUsers(response);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -72,6 +74,7 @@ const UsersPage = () => {
     };
 
     fetchUsers();
+    return live(fetchUsers);
   }, []);
 
 
@@ -81,28 +84,6 @@ const UsersPage = () => {
 
 
   
-    const handleBanUser = async (userId) => {
-    try {
-      await axios.put(`https://aitool.asoroautomotive.com/api/users/${userId}/account-status`, {
-        acc_status: "Banned",
-      });
-      toast.success("User banned successfully");
-      setIsDialogOpen(false);
-    } catch (error) {
-      toast.error("Failed to ban User.");
-    }
-  };
-    const revokeBanUser = async (userId) => {
-    try {
-      await axios.put(`https://aitool.asoroautomotive.com/api/users/${userId}/account-status`, {
-        acc_status: "Okay",
-      });
-      toast.success("User unbanned successfully");
-      setIsDialogOpen(false);
-    } catch (error) {
-      toast.error("Failed to unban User.");
-    }
-  };
 
    const handleOpenDialog = (user:User, viewMode = false) => {
     setSelectedUser(user);
@@ -120,7 +101,7 @@ const UsersPage = () => {
    const updateUserSeen = async (userId: string) => {
     try {
       const response = await axios.put(
-        `https://aitool.asoroautomotive.com/api/users/updateSeen/${userId}`
+        `${import.meta.env.VITE_API_BASE_URL}/users/updateSeen/${userId}`
       );
       console.log("user marked as seen:", response.data);
       return response.data;
@@ -174,6 +155,7 @@ const UsersPage = () => {
             <TableHead>Joined</TableHead>
             <TableHead>Wallet balance</TableHead>
             <TableHead>Verification status</TableHead>
+            <TableHead>Account status</TableHead>
             <TableHead>Id</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -181,7 +163,7 @@ const UsersPage = () => {
         <TableBody>
           {filteredUsers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-10">
+              <TableCell colSpan={7} className="text-center py-10">
                 No users found
               </TableCell>
             </TableRow>
@@ -210,6 +192,7 @@ const UsersPage = () => {
                     </span>
                   )}
                 </TableCell>
+                <TableCell><AccountStatus status={user.acc_status} until={user.date_unsuspended} /></TableCell>
                  <TableCell>{user.id}</TableCell>
                 {/* <TableCell className="text-right space-x-2">
                   <Button variant="ghost" size="icon">
@@ -299,9 +282,7 @@ const UsersPage = () => {
         {isViewMode ? (
           <div>
             <Label className="text-sm text-muted-foreground">Status</Label>
-            <p className="font-medium capitalize">
-              {selectedUser.acc_status}
-            </p>
+            <p className="mt-1"><AccountStatus status={selectedUser.acc_status} until={selectedUser.date_unsuspended} /></p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -327,22 +308,14 @@ const UsersPage = () => {
   </Button> */}
 
   {selectedUser && (
-   <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 mt-4">
-    {selectedUser.acc_status === "Banned" ? (
-      <Button
-        variant="default"
-        onClick={() => revokeBanUser(selectedUser.id)}
-      >
-        Unban User
-      </Button>
-    ) : (
-      <Button
-        variant="destructive"
-        onClick={() => handleBanUser(selectedUser.id)}
-      >
-        Ban User
-      </Button>
-    )}
+   <DialogFooter className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-2 mt-4">
+    <MessageAccountDialog recipientId={selectedUser.id} recipientType="user" name={selectedUser.fullName} />
+    <AccountActions kind="user" id={selectedUser.id} status={selectedUser.acc_status}
+      onDone={(acc_status, date_unsuspended) => {
+        const upd = (x: User) => (x.id === selectedUser.id ? { ...x, acc_status, date_unsuspended } : x);
+        setUsers((prev) => prev.map(upd));
+        setSelectedUser((x) => (x ? upd(x) : x));
+      }} />
 </DialogFooter>
 )}
 

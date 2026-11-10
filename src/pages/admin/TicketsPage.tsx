@@ -37,6 +37,7 @@ import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMessagesByTicketId } from "@/services/messagesService";
+import Person from "@/components/admin/Person";
 
 interface Ticket {
   admin_id: string;
@@ -51,6 +52,8 @@ interface Ticket {
   created_at: string;
   updated_at: string;
   closed_at?: string;
+  submitted_by_name?: string; submitted_by_email?: string; submitted_by_type?: string;
+  assigned_to_name?: string; assigned_to_email?: string;
 }
 
 const TicketsPage = () => {
@@ -149,9 +152,10 @@ useEffect(() => {
     data?.tickets?.filter(
       (ticket: Ticket) =>
         ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (ticket.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         ticket.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.user_id.toLowerCase().includes(searchQuery.toLowerCase())
+        ticket.user_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `${ticket.submitted_by_name || ""} ${ticket.submitted_by_email || ""}`.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
 
   const handleViewTicket = (ticketId: string) => {
@@ -279,11 +283,11 @@ useEffect(() => {
                           {ticket.status}
                         </div>
                       </TableCell>
-                      <TableCell>{ticket.user_id}</TableCell>
+                      <TableCell><Person name={ticket.submitted_by_name} email={ticket.submitted_by_email} type={ticket.submitted_by_type} id={ticket.user_id} /></TableCell>
                       <TableCell>
                         {new Date(ticket.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>{ticket.admin_id || "Unassigned"}</TableCell>
+                      <TableCell>{ticket.admin_id ? <Person name={ticket.assigned_to_name} email={ticket.assigned_to_email} id={ticket.admin_id} /> : "Unassigned"}</TableCell>
                       <TableCell className="text-right space-x-2">
                        <Button
   variant="ghost"
@@ -367,7 +371,7 @@ useEffect(() => {
                     Currently Assigned To
                   </Label>
                   <p className="font-medium">
-                    {selectedTicket.admin_id || "Unassigned"}
+                    {selectedTicket.admin_id ? (selectedTicket.assigned_to_name || selectedTicket.admin_id) : "Unassigned"}
                   </p>
                 </div>
                 <div className="bg-muted p-3 rounded-md">

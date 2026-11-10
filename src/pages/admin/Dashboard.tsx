@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { live } from "@/lib/live";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOrders, updateOrder, deleteOrder } from "@/services/orderService";
 // import { getMetrics, getOrders, getAllUsers } from "@/services/adminService";
@@ -28,8 +29,6 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setIsLoading(true);
-
         // Fetch everything in parallel
         const [ordersResponse, usersResponse, sellersResponse] =
           await Promise.all([getOrders(), getAllUsers(), getAllSellers()]);
@@ -83,6 +82,7 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
+    return live(fetchDashboardData, 15000);
   }, []);
 
   // Calculate summary metrics
